@@ -1744,12 +1744,12 @@ const VEHICLE = {
     over(color, paint) { roadster(color, paint); blob(0, [[70, -62, 15], [94, -56, 12], [48, -60, 10], [-104, -60, 12]], '#fff'); },
   },
   spark: { // a kicksled
-    seat: [-34, -58], moose: 132, wheels: [], back: [-112, -60],
+    seat: [-34, -92], moose: 132, wheels: [], back: [-112, -60],
     under() { g.strokeStyle = '#7a5232'; g.lineWidth = 11; g.lineCap = 'round'; g.beginPath(); g.moveTo(-112, -16); g.lineTo(-116, -128); g.stroke(); },
-    over(color) { panel(-96, -66, 148, 16, 7, color); for (const x of [-84, 30]) rect(0, x, -54, 11, 46, '#7a5232'); ski(-136, 96); },
+    over(color) { panel(-92, -92, 116, 44, 10, color); panel(-96, -60, 148, 14, 7, color); for (const x of [-84, 30]) rect(0, x, -54, 11, 46, '#7a5232'); ski(-136, 96); },
   },
   snoskoter: {
-    seat: [-44, -64], moose: 128, wheels: [], back: [-124, -76],
+    seat: [-44, -68], moose: 128, wheels: [], back: [-124, -76],
     under() { g.fillStyle = 'rgba(190,232,250,.85)'; g.beginPath(); g.moveTo(26, -78); g.lineTo(52, -128); g.lineTo(70, -124); g.lineTo(66, -72); g.fill(); },
     over(color) {
       track(-132, -6, 34); rect(0, 56, -32, 9, 24, '#2b2d38'); ski(14, 112);
@@ -1758,10 +1758,10 @@ const VEHICLE = {
     },
   },
   hundspann: { // a sled with its two huskies running ahead
-    seat: [-70, -44], moose: 118, wheels: [], back: [-146, -56],
-    under(color) { panel(-124, -66, 106, 16, 6, color); },
+    seat: [-70, -84], moose: 118, wheels: [], back: [-146, -56],
+    under() {},
     over(color) {
-      rect(0, -122, -52, 104, 12, color); for (const x of [-116, -36]) rect(0, x, -44, 9, 36, '#7a5232'); ski(-146, -6);
+      panel(-126, -84, 112, 36, 10, color); rect(0, -122, -52, 104, 12, color); for (const x of [-116, -36]) rect(0, x, -44, 9, 36, '#7a5232'); ski(-146, -6);
       g.strokeStyle = '#7a5232'; g.lineWidth = 4; g.beginPath(); g.moveTo(-18, -46); g.lineTo(150, -46); g.stroke();
       [46, 128].forEach((x, i) => {
         const run = calm ? 0 : Math.sin(S.wheel * .7 + i) * 8;
@@ -1773,7 +1773,7 @@ const VEHICLE = {
     },
   },
   bandvagn: { // two linked cabins on tracks
-    seat: [58, -82], moose: 96, wheels: [], back: [-150, -112],
+    seat: [58, -92], moose: 96, wheels: [], back: [-150, -112],
     under() { panel(16, -134, 96, 56, 12, SKY_GLASS); },
     over(color) {
       track(8, 148, 38); track(-158, -14, 38); rect(0, -18, -44, 30, 10, '#2b2d38');
@@ -1782,7 +1782,7 @@ const VEHICLE = {
     },
   },
   slade: { // Santa's sleigh, with Rudolf out in front
-    seat: [-58, -66], moose: 118, wheels: [], back: [-128, -62],
+    seat: [-58, -56], moose: 118, wheels: [], back: [-128, -62],
     under(color) { panel(-122, -96, 40, 76, 16, color); },
     over(color) {
       g.fillStyle = color; g.beginPath(); g.moveTo(-126, -24); g.lineTo(-126, -62); g.quadraticCurveTo(-60, -44, -8, -56); g.quadraticCurveTo(26, -64, 30, -92); g.quadraticCurveTo(48, -40, 12, -24); g.closePath(); g.fill();
@@ -1795,7 +1795,7 @@ const VEHICLE = {
     },
   },
   pistmaskin: { // the groomer from the ski slopes
-    seat: [-6, -92], moose: 108, wheels: [], back: [-120, -120],
+    seat: [-6, -84], moose: 108, wheels: [], back: [-120, -120],
     under(color) { panel(-58, -168, 122, 90, 14, SKY_GLASS); },
     over(color) {
       rect(0, -66, -176, 138, 12, color); rect(0, -66, -176, 12, 110, color); rect(0, 60, -176, 12, 110, color);
@@ -1806,7 +1806,7 @@ const VEHICLE = {
   },
   car: { under() { panel(-112, -116, 26, 66, 12, NAVY); }, over: roadster },
   sport: {
-    seat: [-34, -58], moose: 138, wheels: [[-82, 30], [84, 30]], back: [-116, -70],
+    seat: [-34, -66], moose: 138, wheels: [[-82, 30], [84, 30]], back: [-116, -70],
     under() { panel(-84, -104, 24, 60, 11, NAVY); g.fillStyle = 'rgba(190,232,250,.8)'; g.beginPath(); g.moveTo(20, -68); g.lineTo(50, -108); g.lineTo(62, -106); g.lineTo(66, -62); g.fill(); },
     over(color) {
       g.fillStyle = color; g.beginPath(); g.moveTo(-132, -24); g.lineTo(-132, -66); g.quadraticCurveTo(-60, -72, -6, -66); g.quadraticCurveTo(60, -64, 124, -44); g.quadraticCurveTo(136, -28, 118, -22); g.closePath(); g.fill();
@@ -1816,12 +1816,12 @@ const VEHICLE = {
     },
   },
   van: {
-    seat: [56, -62], moose: 112, back: [-104, -184],
+    seat: [56, -80], moose: 112, back: [-104, -184],
     under(color) { cabinBack(-176, '#fffaf0'); panel(-112, -158, 96, 62, 12, SKY_GLASS); },
     over(color) { cabinFront(-176, color, color); g.fillStyle = '#fffaf0'; g.beginPath(); g.arc(80, -62, 13, 0, 7); g.fill(); panel(-80, -78, 26, 8, 4, 'rgba(0,0,0,.2)'); },
   },
   tractor: {
-    seat: [-62, -74], moose: 118, wheels: [[-72, 52], [86, 28]], back: [-112, -206],
+    seat: [-62, -104], moose: 118, wheels: [[-72, 52], [86, 28]], back: [-112, -206],
     under() { rect(0, -116, -204, 9, 130, '#2b2d38'); rect(0, 4, -204, 9, 110, '#2b2d38'); panel(-92, -104, 22, 60, 10, NAVY); },
     over(color) {
       panel(-8, -112, 134, 70, 14, color); rect(0, 112, -106, 10, 58, '#2b2d38'); panel(94, -158, 11, 50, 4, '#2b2d38');
@@ -1832,7 +1832,7 @@ const VEHICLE = {
     },
   },
   icecream: {
-    seat: [56, -62], moose: 112, back: [-104, -186],
+    seat: [56, -80], moose: 112, back: [-104, -186],
     under() {
       cabinBack(-176, '#fffaf0'); panel(-108, -152, 92, 56, 8, '#ffd9e4');
       panel(-98, -142, 30, 44, 6, '#f6c21c'); g.fillStyle = '#f2577d'; g.beginPath(); g.arc(-83, -144, 14, 0, 7); g.fill();
@@ -1845,7 +1845,7 @@ const VEHICLE = {
     },
   },
   bus: {
-    seat: [58, -68], moose: 112, wheels: [[-86, 32], [82, 32]], back: [-112, -190],
+    seat: [58, -86], moose: 112, wheels: [[-86, 32], [82, 32]], back: [-112, -190],
     under(color) {
       cabinBack(-182, color, -136, 272);
       [-122, -60].forEach((x, i) => {
@@ -1857,7 +1857,7 @@ const VEHICLE = {
     over(color, paint) { cabinFront(-182, color, color, -136, 272); panel(-136, -66, 272, 9, 0, 'rgba(255,255,255,.7)'); },
   },
   fire: {
-    seat: [56, -62], moose: 112, wheels: [[-80, 34], [80, 34]], back: [-104, -222],
+    seat: [56, -80], moose: 112, wheels: [[-80, 34], [80, 34]], back: [-104, -222],
     under() { cabinBack(-176, '#e8483f'); for (let i = 0; i < 2; i++) panel(-114 + i * 54, -158, 46, 62, 6, '#c9352c'); },
     over() {
       cabinFront(-176, '#e8483f', '#c9352c');
@@ -1866,7 +1866,7 @@ const VEHICLE = {
     },
   },
   police: {
-    seat: [56, -62], moose: 112, back: [-104, -188],
+    seat: [56, -80], moose: 112, back: [-104, -188],
     under() { cabinBack(-176, '#fffaf0'); panel(-112, -158, 96, 60, 12, SKY_GLASS); },
     over() {
       cabinFront(-176, '#fffaf0', '#fffaf0');
@@ -1877,7 +1877,7 @@ const VEHICLE = {
     },
   },
   viking: {
-    seat: [-6, -76], moose: 128, back: [-124, -96],
+    seat: [-6, -82], moose: 128, back: [-124, -96],
     under() {
       rect(0, -74, -232, 10, 200, '#8a5a2e');
       for (let i = 0; i < 6; i++) rect(0, -128 + i * 22, -218, 22, 96, i % 2 ? '#fffaf0' : '#e8483f');
@@ -1892,7 +1892,7 @@ const VEHICLE = {
     },
   },
   rocket: {
-    seat: [-30, -98], moose: 124, wheels: [[-74, 24], [76, 24]], back: [-112, -128],
+    seat: [-30, -122], moose: 124, wheels: [[-74, 24], [76, 24]], back: [-112, -128],
     under(color) {
       g.fillStyle = NAVY; g.beginPath(); g.moveTo(-96, -128); g.lineTo(-150, -176); g.lineTo(-134, -106); g.fill();
       const fire = calm ? .6 : Math.min(S.v / V_MAX, 1) * (.8 + Math.sin(S.t * 30) * .2);
@@ -1910,7 +1910,7 @@ const VEHICLE = {
 };
 function drawCar(x, y, angle, look = loadout()) {
   const paint = paintOf(look.paint), v = VEHICLE[look.vehicle || 'car'], color = paintFill(paint, -132, 132);
-  const big = look.tyre === 'monster', lift = big ? 14 : 0, [seatX, seatY] = v.seat || [-30, -66], [backX, backY] = v.back || [-112, -76];
+  const big = look.tyre === 'monster', lift = big ? 14 : 0, [seatX, collar] = v.seat || [-30, -74], mooseW = v.moose || 150, [backX, backY] = v.back || [-112, -76];
   y -= S.hop;
   const bump = calm ? 0 : Math.sin(S.t * 19) * Math.min(S.v / V_MAX, 1) * 1.6;
   g.save(); g.translate(x, y - 4); g.rotate(angle);
@@ -1918,9 +1918,10 @@ function drawCar(x, y, angle, look = loadout()) {
   g.save(); g.translate(0, bump - lift);
   if (look.back) { g.save(); g.translate(backX, backY); drawBack(look.back); g.restore(); }
   v.under(color, paint);
-  // moose next, so the door hides the neck
-  g.save(); g.translate(seatX, seatY); g.rotate(Math.sin(S.t * 2.2) * .025 + Math.sin(S.honkT * 22) * .1);
-  if (moose.complete && moose.naturalWidth) drawMoose(v.moose || 150);
+  // seat is the x and the top edge of what the moose sits behind: its chin rests there, and nothing below ever shows
+  g.save(); g.beginPath(); g.rect(-400, collar - 500, 800, 500); g.clip();
+  g.translate(seatX, collar + mooseW * .125); g.rotate(Math.sin(S.t * 2.2) * .025 + Math.sin(S.honkT * 22) * .1);
+  if (moose.complete && moose.naturalWidth) drawMoose(mooseW);
   g.restore();
   v.over(color, paint);
   if (S.blade && S.screen === 'play') { g.fillStyle = '#f6c21c'; g.beginPath(); g.moveTo(126, -60); g.quadraticCurveTo(118, -24, 150, 0); g.lineTo(172, 0); g.quadraticCurveTo(148, -30, 158, -60); g.fill(); }
