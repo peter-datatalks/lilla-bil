@@ -3,13 +3,14 @@
 // or when the network takes longer than 3 seconds.
 
 // Bump the version when releasing so every device downloads the new app files.
-const SHELL = 'lb-shell-v2';
+const SHELL = 'lb-shell-v3';
 
 const APP_FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'assets/moose.webp',
+  'assets/logo.webp',
   'assets/icon-512.png',
   'assets/apple-touch-icon.png',
   'assets/fonts/Baloo2-latin.woff2',
