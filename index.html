@@ -100,6 +100,7 @@ svg { display: block; }
 #gas svg { width: 66%; height: 66%; }
 #gas.down { transform: translateY(.55rem) scale(.97); box-shadow: 0 .25rem 0 var(--gas-dark); }
 #gas.nudge { animation: nudge 1s infinite; }
+#gas.ease { --gas: #f08a2c; --gas-dark: #c96a14; animation: nudge .4s infinite; }
 @keyframes nudge { 50% { transform: scale(1.07) } }
 
 #act { position: absolute; left: var(--gap); bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 10px));
@@ -182,6 +183,16 @@ svg { display: block; }
 #awning { grid-column: 1 / -1; margin-left: calc(var(--gap) * -1); margin-right: calc(var(--gap-r) * -1);
   height: clamp(66px, 15vmin, 92px); padding: 0 var(--gap-r) 0 var(--gap); display: flex; align-items: center; justify-content: space-between;
   background: repeating-linear-gradient(90deg, #e8483f 0 56px, #fffaf0 56px 112px); box-shadow: 0 .3rem 0 rgba(18,48,107,.16); }
+#shop.cold { background: linear-gradient(#bfe3f7, #eef8fc); }
+#shop.cold #awning { background: repeating-linear-gradient(90deg, #1d6fb8 0 56px, #fffaf0 56px 112px); }
+#seasonName { padding: 0 .8em; border-radius: 99px; background: var(--paper); font-size: clamp(20px, 5.5vmin, 30px); font-weight: 800; box-shadow: 0 .3rem 0 rgba(18,48,107,.22); }
+#seasons { display: none; }
+#shop.picking #stage, #shop.picking #counter { display: none; }
+#shop.picking #seasons { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vmin, 32px); min-height: 0; }
+.seasonBtn { flex: 0 1 44%; max-width: 380px; min-height: 0; max-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 6px; border: 0; border-radius: 28px; color: var(--navy); font: inherit; font-size: clamp(22px, 7vmin, 36px); font-weight: 800; cursor: pointer; box-shadow: 0 .4rem 0 rgba(18,48,107,.24); }
+#pickSommar { background: #d9f3c9; } #pickVinter { background: #cfe9f8; }
+.seasonBtn canvas { position: static; width: 100%; height: auto; max-height: 56vh; object-fit: contain; }
+@media (max-aspect-ratio: 1/1) { #shop.picking #seasons { flex-direction: column; } .seasonBtn { flex: 0 1 46%; width: min(80vw, 340px); } }
 #wallet { display: flex; align-items: center; gap: 6px; background: var(--paper); border-radius: 99px; padding: 2px 16px 2px 6px;
   font-size: clamp(24px, 6vmin, 34px); line-height: 1.3; font-variant-numeric: tabular-nums; box-shadow: 0 .3rem 0 rgba(18,48,107,.22); }
 #wallet svg { width: clamp(30px, 7.6vmin, 42px); height: clamp(30px, 7.6vmin, 42px); }
@@ -249,7 +260,7 @@ svg { display: block; }
 
   <div id="hud" hidden>
     <button class="toy small" id="home" aria-label="Tillbaka till kartan"><svg viewBox="0 0 24 24"><path fill="#12306b" d="M12 3 2.5 11.5h3V21h5v-6h3v6h5v-9.500h3z"/></svg></button>
-    <div id="fuel" role="img" aria-label="Bensin"><svg viewBox="0 0 48 48" data-can></svg><div id="fuelBar"><div id="fuelFill"></div></div><svg id="spare" viewBox="0 0 48 48" data-can hidden></svg><span class="loss"></span></div>
+    <div id="fuel" role="img" aria-label="Bensin"><svg viewBox="0 0 48 48" data-can></svg><div id="fuelBar"><div id="fuelFill"></div></div><svg id="spare" viewBox="0 0 48 48" data-can hidden></svg></div>
     <div id="trip"><div id="tripDot"></div><svg id="tripEnd" viewBox="0 0 24 24"><path fill="#12306b" d="M5 2h2.500v20H5z"/><path fill="#f4614d" d="M7.500 3H21l-3.500 4.500L21 12H7.500z"/></svg></div>
     <div id="coins"><svg viewBox="0 0 48 48" data-coin></svg><span id="coinN">0</span><span class="loss"></span></div>
     <button class="toy small" id="mute" aria-label="Ljud på eller av"></button>
@@ -287,7 +298,12 @@ svg { display: block; }
   <section id="shop" class="screen" hidden>
     <div id="awning">
       <button class="toy small" id="shopBack" aria-label="Tillbaka till kartan"><svg viewBox="0 0 24 24"><path fill="#12306b" d="M12 3 2.500 11.500h3V21h5v-6h3v6h5v-9.500h3z"/></svg></button>
+      <div id="seasonName" hidden></div>
       <div id="wallet"><svg viewBox="0 0 48 48" data-coin></svg><span id="walletN">0</span></div>
+    </div>
+    <div id="seasons">
+      <button class="seasonBtn" id="pickSommar"><canvas id="picSommar"></canvas><span>Sommar</span></button>
+      <button class="seasonBtn" id="pickVinter"><canvas id="picVinter"></canvas><span>Vinter</span></button>
     </div>
     <div id="stage"><canvas id="shopCar" aria-label="Din bil"></canvas><div id="buy"></div></div>
     <div id="counter"><div id="tabs"></div><div id="wares"></div></div>
@@ -383,44 +399,51 @@ let save = { unlocked: 0, best: {}, total: 0, paint: 0, muted: false, name: '', 
 try { save = { ...save, ...JSON.parse(localStorage.getItem(SAVE_KEY) || '{}') }; } catch {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
 
-/* ---------- market catalogue. Coins in save.total are now a wallet that buying spends ---------- */
+/* ---------- market catalogue. Coins in save.total are now a wallet that buying spends.
+   w is the season an item is sold in: left out for summer, 1 for both, 2 for winter. An item bought once works in both of its seasons ---------- */
 const CATALOG = {
   vehicle: [
     { id: 'car', price: 0 }, { id: 'sport', price: 150 }, { id: 'van', price: 200 }, { id: 'tractor', price: 250 }, { id: 'icecream', price: 300 },
     { id: 'bus', price: 350 }, { id: 'fire', price: 400 }, { id: 'police', price: 450 }, { id: 'viking', price: 500 }, { id: 'rocket', price: 600 },
-  ],
-  snow: [ // winter roads need one of these. The first is free, so nobody is ever stuck behind a price
-    { id: 'vinterbil', price: 0 }, { id: 'spark', price: 90 }, { id: 'snoskoter', price: 200 }, { id: 'hundspann', price: 300 }, { id: 'pistmaskin', price: 420 },
-    { id: 'dubbar', prices: [60] }, { id: 'varme', prices: [50, 100] }, { id: 'plog', prices: [110] },
+    { id: 'vinterbil', price: 0, w: 2 }, { id: 'spark', price: 90, w: 2 }, { id: 'snoskoter', price: 200, w: 2 }, { id: 'hundspann', price: 300, w: 2 },
+    { id: 'pistmaskin', price: 420, w: 2 }, { id: 'bandvagn', price: 480, w: 2 }, { id: 'slade', price: 560, w: 2 },
   ],
   paint: [
-    { id: 'red', price: 0, color: '#e8483f' }, { id: 'blue', price: 10, color: '#1d9bf0' }, { id: 'yellow', price: 30, color: '#f6c21c' },
+    { id: 'red', w: 1, price: 0, color: '#e8483f' }, { id: 'blue', price: 10, color: '#1d9bf0' }, { id: 'yellow', price: 30, color: '#f6c21c' },
     { id: 'orange', price: 45, color: '#f28a2e' }, { id: 'teal', price: 60, color: '#22b3a6' }, { id: 'green', price: 75, color: '#3fa34d' },
-    { id: 'pink', price: 100, color: '#f2577d' }, { id: 'navy', price: 130, color: '#23408f' }, { id: 'purple', price: 160, color: '#7a5cd6' },
-    { id: 'silver', price: 170, color: '#b4bccb', shiny: true }, { id: 'gold', price: 180, color: '#d9a514', shiny: true },
-    { id: 'sverige', price: 190, color: '#1668b5', stops: [[0, '#1668b5'], [.36, '#1668b5'], [.36, '#f6c21c'], [.5, '#f6c21c'], [.5, '#1668b5'], [1, '#1668b5']] },
+    { id: 'pink', price: 100, color: '#f2577d' }, { id: 'navy', w: 1, price: 130, color: '#23408f' }, { id: 'purple', price: 160, color: '#7a5cd6' },
+    { id: 'silver', w: 1, price: 170, color: '#b4bccb', shiny: true }, { id: 'gold', w: 1, price: 180, color: '#d9a514', shiny: true },
+    { id: 'sverige', w: 1, price: 190, color: '#1668b5', stops: [[0, '#1668b5'], [.36, '#1668b5'], [.36, '#f6c21c'], [.5, '#f6c21c'], [.5, '#1668b5'], [1, '#1668b5']] },
     { id: 'rainbow', price: 210, color: '#f4614d', stops: [[0, '#f4614d'], [.2, '#f6a91c'], [.4, '#f6e21c'], [.6, '#3fc36a'], [.8, '#1d9bf0'], [1, '#7a5cd6']] },
-    { id: 'aurora', price: 240, color: '#2a6d8f', stops: [[0, '#14245e'], [.4, '#22b3a6'], [.7, '#7a5cd6'], [1, '#f2577d']] },
+    { id: 'aurora', w: 1, price: 240, color: '#2a6d8f', stops: [[0, '#14245e'], [.4, '#22b3a6'], [.7, '#7a5cd6'], [1, '#f2577d']] },
+    { id: 'isbla', w: 2, price: 0, color: '#7fcdf2' }, { id: 'snovit', w: 2, price: 20, color: '#eaf2f9' }, { id: 'lingon', w: 2, price: 50, color: '#b3202e' },
+    { id: 'gran', w: 2, price: 70, color: '#1f6b4a' }, { id: 'polkagris', w: 2, price: 120, color: '#e8483f', stops: [[0, '#e8483f'], [.25, '#e8483f'], [.25, '#fff'], [.5, '#fff'], [.5, '#e8483f'], [.75, '#e8483f'], [.75, '#fff'], [1, '#fff']] },
   ],
   tyre: [
-    { id: 'plain', price: 0 }, { id: 'flower', price: 15 }, { id: 'star', price: 30 }, { id: 'football', price: 40 }, { id: 'rainbow', price: 50 },
-    { id: 'donut', price: 65 }, { id: 'wagon', price: 75 }, { id: 'monster', price: 90 }, { id: 'gold', price: 100 },
+    { id: 'plain', price: 0 }, { id: 'flower', price: 15 }, { id: 'star', w: 1, price: 30 }, { id: 'football', price: 40 }, { id: 'rainbow', price: 50 },
+    { id: 'donut', price: 65 }, { id: 'wagon', price: 75 }, { id: 'monster', w: 1, price: 90 }, { id: 'gold', w: 1, price: 100 },
+    { id: 'vinterdack', w: 2, price: 0 }, { id: 'kedjor', w: 2, price: 35 }, { id: 'flinga', w: 2, price: 55 }, { id: 'pepparkaka', w: 2, price: 80 },
   ],
   extra: [
-    { id: 'cap', slot: 'hat', price: 15 }, { id: 'party', slot: 'hat', price: 25 }, { id: 'beanie', slot: 'hat', price: 30 }, { id: 'wreath', slot: 'hat', price: 35 }, { id: 'viking', slot: 'hat', price: 50 },
-    { id: 'tomte', slot: 'hat', price: 55 }, { id: 'pirate', slot: 'hat', price: 70 }, { id: 'crown', slot: 'hat', price: 70 }, { id: 'wizard', slot: 'hat', price: 95 },
-    { id: 'flag', slot: 'back', price: 20 }, { id: 'pinwheel', slot: 'back', price: 30 }, { id: 'balloon', slot: 'back', price: 30 }, { id: 'spoiler', slot: 'back', price: 45 }, { id: 'rod', slot: 'back', price: 60 }, { id: 'kite', slot: 'back', price: 75 },
-    { id: 'hearts', slot: 'trail', price: 25 }, { id: 'bubbles', slot: 'trail', price: 30 }, { id: 'stars', slot: 'trail', price: 35 }, { id: 'notes', slot: 'trail', price: 45 }, { id: 'flowers', slot: 'trail', price: 50 },
-    { id: 'snow', slot: 'trail', price: 55 }, { id: 'rainbow', slot: 'trail', price: 65 }, { id: 'fire', slot: 'trail', price: 80 },
+    { id: 'cap', slot: 'hat', price: 15 }, { id: 'party', slot: 'hat', price: 25 }, { id: 'beanie', w: 1, slot: 'hat', price: 30 }, { id: 'wreath', slot: 'hat', price: 35 }, { id: 'viking', slot: 'hat', price: 50 },
+    { id: 'tomte', w: 1, slot: 'hat', price: 55 }, { id: 'pirate', slot: 'hat', price: 70 }, { id: 'crown', w: 1, slot: 'hat', price: 70 }, { id: 'wizard', slot: 'hat', price: 95 },
+    { id: 'flag', w: 1, slot: 'back', price: 20 }, { id: 'pinwheel', slot: 'back', price: 30 }, { id: 'balloon', slot: 'back', price: 30 }, { id: 'spoiler', slot: 'back', price: 45 }, { id: 'rod', slot: 'back', price: 60 }, { id: 'kite', slot: 'back', price: 75 },
+    { id: 'hearts', slot: 'trail', price: 25 }, { id: 'bubbles', slot: 'trail', price: 30 }, { id: 'stars', w: 1, slot: 'trail', price: 35 }, { id: 'notes', slot: 'trail', price: 45 }, { id: 'flowers', slot: 'trail', price: 50 },
+    { id: 'snow', w: 1, slot: 'trail', price: 55 }, { id: 'rainbow', slot: 'trail', price: 65 }, { id: 'fire', slot: 'trail', price: 80 },
+    { id: 'toppluva', slot: 'hat', w: 2, price: 20 }, { id: 'oronlappar', slot: 'hat', w: 2, price: 30 }, { id: 'renhorn', slot: 'hat', w: 2, price: 40 }, { id: 'hog', slot: 'hat', w: 2, price: 50 }, { id: 'lucia', slot: 'hat', w: 2, price: 65 },
+    { id: 'skidor', slot: 'back', w: 2, price: 30 }, { id: 'sack', slot: 'back', w: 2, price: 50 }, { id: 'julgran', slot: 'back', w: 2, price: 60 },
+    { id: 'flingor', slot: 'trail', w: 2, price: 30 }, { id: 'pepparkakor', slot: 'trail', w: 2, price: 45 }, { id: 'norrsken', slot: 'trail', w: 2, price: 70 },
   ],
   horn: [
-    { id: 'beep', price: 0, pic: 'horn' }, { id: 'moose', price: 35, pic: 'moose' }, { id: 'duck', price: 50, pic: '\u{1F986}' }, { id: 'cow', price: 60, pic: '\u{1F404}' }, { id: 'train', price: 90, pic: '\u{1F682}' }, { id: 'fanfare', price: 130, pic: '\u{1F3BA}' },
+    { id: 'beep', w: 1, price: 0, pic: 'horn' }, { id: 'moose', w: 1, price: 35, pic: 'moose' }, { id: 'duck', price: 50, pic: '\u{1F986}' }, { id: 'cow', price: 60, pic: '\u{1F404}' }, { id: 'train', price: 90, pic: '\u{1F682}' }, { id: 'fanfare', w: 1, price: 130, pic: '\u{1F3BA}' },
+    { id: 'bjallror', w: 2, price: 40, pic: '\u{1F514}' }, { id: 'varg', w: 2, price: 60, pic: '\u{1F43A}' }, { id: 'hoho', w: 2, price: 75, pic: '\u{1F385}' },
   ],
   skill: [
-    { id: 'tank', prices: [40, 80, 140] }, { id: 'turbo', prices: [60, 120] }, { id: 'spare', prices: [70] }, { id: 'magnet', prices: [105] }, { id: 'boing', prices: [15] },
+    { id: 'tank', w: 1, prices: [40, 80, 140] }, { id: 'turbo', w: 1, prices: [60, 120] }, { id: 'spare', w: 1, prices: [70] }, { id: 'magnet', w: 1, prices: [105] }, { id: 'boing', w: 1, prices: [15] },
+    { id: 'dubbar', w: 2, prices: [60] }, { id: 'varme', w: 2, prices: [50, 100] }, { id: 'plog', w: 2, prices: [110] }, { id: 'pulka', w: 2, prices: [80] },
   ],
 };
-const SLOT_OF = { paint: 'paint', tyre: 'tyre', vehicle: 'vehicle', horn: 'horn', snow: 'snow' };
+const SLOT_OF = { paint: 'paint', tyre: 'tyre', vehicle: 'vehicle', horn: 'horn' };
 function migrateSave() {
   if (save.owned) return;
   save.owned = { paint: ['red'], tyre: ['plain'], extra: [] };
@@ -432,7 +455,14 @@ function migrateSave() {
 migrateSave();
 save.owned.vehicle = save.owned.vehicle || ['car']; save.owned.horn = save.owned.horn || ['beep'];
 save.equip.vehicle = save.equip.vehicle || 'car'; save.equip.horn = save.equip.horn || 'beep';
-save.owned.snow = save.owned.snow || ['vinterbil']; save.equip.snow = save.equip.snow || 'vinterbil';
+if (!save.equipW) { // winter got its own gear: what was bought stays, and whatever suits winter comes along
+  const carry = (cat, id) => CATALOG[cat].some(it => it.id === id && it.w) ? id : null;
+  save.owned.vehicle = [...new Set([...save.owned.vehicle, ...(save.owned.snow || []), 'vinterbil'])];
+  save.owned.paint.push('isbla'); save.owned.tyre.push('vinterdack');
+  save.equipW = { vehicle: save.equip.snow || 'vinterbil', paint: 'isbla', tyre: 'vinterdack', horn: carry('horn', save.equip.horn) || 'beep',
+    hat: carry('extra', save.equip.hat), back: carry('extra', save.equip.back), trail: carry('extra', save.equip.trail) };
+  delete save.owned.snow; delete save.equip.snow;
+}
 if (!save.uppsala) { // Uppsala joined the road as level 9, so stops past Stockholm moved up one
   if (save.best[7]) save.unlocked = Math.max(save.unlocked, 8); // the old last level now leads on north
   save.uppsala = true;
@@ -459,6 +489,7 @@ if (!save.road30) { // five more stops: every stop keeps its stars under its new
 }
 persist();
 const skill = id => save.skills[id] || 0;
+const gear = winter => winter ? save.equipW : save.equip;
 const paintOf = id => CATALOG.paint.find(p => p.id === id);
 
 /* ---------- themes: the road north, from Skåne to Abisko, one stretch of Sweden per level ---------- */
@@ -481,18 +512,18 @@ const THEMES = [
   { name: 'stockholm', tune: 'bussen', at: [59.33, 18.0], place: 'Stockholm', sky: ['#7fcdf2', '#e4f4f6'], far: '#a9bcd2', mid: '#4fa6cf', back: '#d1c8b8', ground: '#a9a59f', road: '#4f5468', sun: '#ffd84d', skyline: true, lake: true, critter: 'dog', wild: ['dog', 'hare', 'duck'], vehicle: 'tram', icon: 'stadshus', iconS: .42, sites: [['gamla', 'Gamla Stan', 220], ['stadshus', 'Stadshuset', 370]], sprites: ['gamla', 'lamp', 'block', 'gamla', 'oak', 'lamp'] },
   { name: 'skargard', at: [59.4, 18.7], place: 'Skärgården', sky: ['#62c0f0', '#d8f2fa'], far: '#7fbf9a', mid: '#3aa3d6', back: '#b5b0a6', ground: '#8d8a84', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seal', wild: ['seal', 'seagull', 'duck'], icon: 'ferry', iconS: .55, sites: [['ferry', 'Vaxholmsbåten', 190], ['castle', 'Vaxholms fästning', 250]], sprites: ['rock', 'pine', 'boat', 'rock', 'stuga', 'reed'] },
   { name: 'uppsala', tune: 'jakob', at: [59.86, 17.64], place: 'Uppsala', sky: ['#86d0f2', '#e6f5f0'], far: '#b9cbdc', mid: '#9fc58e', back: '#a7d08a', ground: '#7dbb68', road: '#4f5468', sun: '#ffd84d', critter: 'dog', wild: ['dog', 'grevling', 'hare'], vehicle: 'tram', icon: 'domkyrka', iconS: .55, sites: [['domkyrka', 'Domkyrkan', 335], ['castle', 'Uppsala slott', 250]], sprites: ['oak', 'gamla', 'lamp', 'birch', 'oak', 'lamp'] },
-  { name: 'gavle', at: [60.67, 17.14], place: 'Gävle', sky: ['#a9d9f2', '#eef8fc'], far: '#b9cbdc', mid: '#d6e8f4', back: '#e6eef2', ground: '#d7e1e8', road: '#5f6780', sun: '#fff0b0', skyline: true, snowy: true, fall: ['#ffffff'], critter: 'fox', wild: ['fox', 'hare', 'radjur'], icon: 'bock', iconS: .46, sites: [['bock', 'Gävlebocken', 260]], sprites: ['block', 'lamp', 'snowpine', 'block', 'lamp'] },
+  { name: 'gavle', at: [60.67, 17.14], place: 'Gävle', sky: ['#a9d9f2', '#eef8fc'], far: '#b9cbdc', mid: '#d6e8f4', back: '#e6eef2', ground: '#d7e1e8', road: '#5f6780', sun: '#fff0b0', skyline: true, snowy: true, fall: ['#ffffff'], critter: 'fox', wild: ['fox', 'hare', 'radjur'], icon: 'bock', iconS: .46, sites: [['bock', 'Gävlebocken', 260]], sprites: ['snowman', 'julgran', 'snolykta', 'block', 'lamp', 'snowpine', 'block', 'lamp'] },
   { name: 'dalarna', at: [60.9, 14.9], place: 'Dalarna', sky: ['#7fd0f4', '#e9f8e0'], far: '#8fc3a2', mid: '#6db26e', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', critter: 'moose', wild: ['moose', 'varg', 'tjader'], icon: 'dalahorse', iconS: .85, sites: [['pole', 'Midsommarstången', 380], ['dalahorse', 'Dalahästen', 190]], sprites: ['stuga', 'dalahorse', 'birch', 'flower', 'pine', 'sign', 'stuga'] },
   { name: 'sundsvall', tune: 'bussen', at: [62.39, 17.3], place: 'Sundsvall', sky: ['#8cc8ea', '#eaf3ee'], far: '#8fb3a6', mid: '#3f93b8', back: '#c7c2b4', ground: '#a7a39a', road: '#50566a', sun: '#ffe07a', skyline: true, lake: true, critter: 'dog', wild: ['dog', 'radjur'], icon: 'gamla', iconS: .42, sites: [['gamla', 'Stenstaden', 220]], sprites: ['block', 'gamla', 'lamp', 'pine', 'boat'] },
   { name: 'hoga', at: [62.95, 18.1], place: 'Höga Kusten', sky: ['#8cc8ea', '#eaf3ee'], far: '#6f9f8a', mid: '#3f93b8', back: '#5fa577', ground: '#478a58', road: '#50566a', sun: '#ffe07a', lake: true, critter: 'bear', wild: ['bear', 'lodjur', 'tjader'], vehicle: 'tractor', icon: 'bridge', iconS: .4, sites: [['bridge', 'Höga Kusten-bron', 290]], sprites: ['pine', 'rock', 'pine', 'stuga', 'pine', 'sign'] },
   { name: 'fell', at: [63.2, 14.6], place: 'Jämtland', sky: ['#62c0f0', '#d8f2fa'], far: '#9aa9c8', mid: '#74c183', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', peaks: true, rainbow: true, critter: 'reindeer', wild: ['reindeer', 'jarv', 'lodjur'], icon: 'sheep', iconS: 1.3, sites: [['monster', 'Storsjöodjuret', 210]], sprites: ['rock', 'flower', 'sheep', 'pine', 'stuga', 'rock', 'sign'] },
-  { name: 'umea', at: [63.83, 20.26], place: 'Umeå', sky: ['#a9d9f2', '#eef8fc'], far: '#b9cbdc', mid: '#d6e8f4', back: '#e6eef2', ground: '#e4ecf2', road: '#5f6780', sun: '#fff0b0', skyline: true, snowy: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'hare', 'fox'], vehicle: 'plough', icon: 'guitar', iconS: .62, sites: [['guitar', 'Guitars Museum', 240], ['birch', 'Björkarnas stad', 130]], sprites: ['birch', 'block', 'birch', 'lamp', 'snowpine', 'birch'] },
-  { name: 'snow', at: [64.75, 20.6], place: 'Västerbotten', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'varg', 'hare'], icon: 'snowman', iconS: .9, sites: [['stuga', 'Bonnstan', 190]], sprites: ['snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
-  { name: 'lulea', tune: 'jakob', at: [65.58, 21.9], place: 'Luleå', sky: ['#b6cfe8', '#f3ecdf'], far: '#a9b9cf', mid: '#d4e4ee', back: '#eef4f8', ground: '#fbfcff', road: '#666e88', sun: '#ffe2b0', snowy: true, low: true, critter: 'reindeer', wild: ['reindeer', 'fox'], icon: 'gammelstad', iconS: .6, sites: [['gammelstad', 'Gammelstad', 250], ['stuga', 'Kyrkstaden', 190]], sprites: ['snowpine', 'stuga', 'stuga', 'snowpine', 'lamp'] },
-  { name: 'jokkmokk', at: [66.6, 19.82], place: 'Jokkmokk', sky: ['#a9c8ec', '#f6e6e0'], far: '#9fb0cc', mid: '#d4e4ee', back: '#eef4f8', ground: '#fbfcff', road: '#666e88', sun: '#ffe2b0', snowy: true, low: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'jarv', 'varg'], icon: 'polcirkel', iconS: .62, sites: [['polcirkel', 'Polcirkeln', 240], ['lavvu', 'Jokkmokks marknad', 190]], sprites: ['snowpine', 'lavvu', 'snowpine', 'stuga', 'snowpine', 'sign'] },
-  { name: 'kiruna', at: [67.85, 20.22], place: 'Kiruna', sky: ['#c3b6dc', '#fbe4d2'], far: '#8c86a8', mid: '#d4dcea', back: '#eef2f8', ground: '#fbfcff', road: '#666e88', sun: '#ffd9a0', snowy: true, peaks: true, low: true, critter: 'fox', wild: ['fox', 'reindeer', 'jarv'], vehicle: 'plough', icon: 'church', iconS: .6, sites: [['church', 'Kiruna kyrka', 330]], sprites: ['snowpine', 'block', 'lamp', 'snowpine', 'stuga', 'block'] },
-  { name: 'icehotel', at: [67.9, 20.75], place: 'Jukkasjärvi', sky: ['#8fd0f0', '#eafaff'], far: '#cfe8f6', mid: '#b4dcf0', back: '#f0f9fd', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'fox', wild: ['fox', 'reindeer', 'hare'], icon: 'icehotel', iconS: .6, sites: [['icehotel', 'Icehotel', 210]], sprites: ['snowpine', 'snowman', 'lavvu', 'snowpine', 'sign'] },
-  { name: 'abisko', at: [68.35, 18.83], place: 'Abisko', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, winter: true, peaks: true, critter: 'reindeer', wild: ['reindeer', 'jarv', 'lodjur'], icon: 'lavvu', iconS: .7, sites: [['lapporten', 'Lapporten', 330]], sprites: ['pine', 'lavvu', 'pine', 'stuga', 'sign', 'pine'] },
+  { name: 'umea', at: [63.83, 20.26], place: 'Umeå', sky: ['#a9d9f2', '#eef8fc'], far: '#b9cbdc', mid: '#d6e8f4', back: '#e6eef2', ground: '#e4ecf2', road: '#5f6780', sun: '#fff0b0', skyline: true, snowy: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'hare', 'fox'], vehicle: 'plough', icon: 'guitar', iconS: .62, sites: [['guitar', 'Guitars Museum', 240], ['birch', 'Björkarnas stad', 130]], sprites: ['snowman', 'julgran', 'snolykta', 'birch', 'block', 'birch', 'lamp', 'snowpine', 'birch'] },
+  { name: 'snow', at: [64.75, 20.6], place: 'Västerbotten', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'varg', 'hare'], icon: 'snowman', iconS: .9, sites: [['stuga', 'Bonnstan', 190]], sprites: ['snowman', 'julgran', 'snolykta', 'snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
+  { name: 'lulea', tune: 'jakob', at: [65.58, 21.9], place: 'Luleå', sky: ['#b6cfe8', '#f3ecdf'], far: '#a9b9cf', mid: '#d4e4ee', back: '#eef4f8', ground: '#fbfcff', road: '#666e88', sun: '#ffe2b0', snowy: true, low: true, critter: 'reindeer', wild: ['reindeer', 'fox'], icon: 'gammelstad', iconS: .6, sites: [['gammelstad', 'Gammelstad', 250], ['stuga', 'Kyrkstaden', 190]], sprites: ['snowman', 'julgran', 'snolykta', 'snowpine', 'stuga', 'stuga', 'snowpine', 'lamp'] },
+  { name: 'jokkmokk', at: [66.6, 19.82], place: 'Jokkmokk', sky: ['#a9c8ec', '#f6e6e0'], far: '#9fb0cc', mid: '#d4e4ee', back: '#eef4f8', ground: '#fbfcff', road: '#666e88', sun: '#ffe2b0', snowy: true, low: true, fall: ['#ffffff'], critter: 'reindeer', wild: ['reindeer', 'jarv', 'varg'], icon: 'polcirkel', iconS: .62, sites: [['polcirkel', 'Polcirkeln', 240], ['lavvu', 'Jokkmokks marknad', 190]], sprites: ['snowman', 'julgran', 'snolykta', 'snowpine', 'lavvu', 'snowpine', 'stuga', 'snowpine', 'sign'] },
+  { name: 'kiruna', at: [67.85, 20.22], place: 'Kiruna', sky: ['#c3b6dc', '#fbe4d2'], far: '#8c86a8', mid: '#d4dcea', back: '#eef2f8', ground: '#fbfcff', road: '#666e88', sun: '#ffd9a0', snowy: true, peaks: true, low: true, critter: 'fox', wild: ['fox', 'reindeer', 'jarv'], vehicle: 'plough', icon: 'church', iconS: .6, sites: [['church', 'Kiruna kyrka', 330]], sprites: ['snowman', 'julgran', 'snolykta', 'snowpine', 'block', 'lamp', 'snowpine', 'stuga', 'block'] },
+  { name: 'icehotel', at: [67.9, 20.75], place: 'Jukkasjärvi', sky: ['#8fd0f0', '#eafaff'], far: '#cfe8f6', mid: '#b4dcf0', back: '#f0f9fd', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'fox', wild: ['fox', 'reindeer', 'hare'], icon: 'icehotel', iconS: .6, sites: [['icehotel', 'Icehotel', 210]], sprites: ['snowman', 'julgran', 'snolykta', 'snowpine', 'snowman', 'lavvu', 'snowpine', 'sign'] },
+  { name: 'abisko', at: [68.35, 18.83], place: 'Abisko', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, winter: true, peaks: true, critter: 'reindeer', wild: ['reindeer', 'jarv', 'lodjur'], icon: 'lavvu', iconS: .7, sites: [['lapporten', 'Lapporten', 330]], sprites: ['snowman', 'julgran', 'snolykta', 'pine', 'lavvu', 'pine', 'stuga', 'sign', 'pine'] },
 ];
 
 /* ---------- levels ----------
@@ -537,15 +568,16 @@ const SPECS = [
   { forks: 7, obs: ['critter', 'hump', 'rock', 'ramp', 'ice', 'ball'], coinLog: true, fuelLogs: 1, tri: 2, dead: 1 },
   { forks: 7, obs: ['critter', 'hump', 'rock', 'ramp', 'ice', 'ball'], coinLog: true, fuelLogs: 2, tri: 2, dead: 1 },
 ];
-/* A bump costs a tenth of a tank and ten coins, shown by the fuel bar and the coin count, then the road is clear again.
+/* Water and ice are safe at a gentle speed: a sign warns of them and the pedal turns orange until the car has slowed.
+   A bump costs a tenth of a tank and ten coins, shown by the fuel bar and the coin count, then the road is clear again.
    h is how high the car must be to clear it, w its width on the road. Soft ones never hurt: they are
    fun things to drive over, and a car that jumps them anyway earns the coin. A slow vehicle leaves
    the road by itself, so no other obstacle may share a stretch between its start and end. */
 const OBST = { critter: { at: 700, h: 999, w: 90 }, slow: { at: 700, h: 999, w: 200, run: 1100 }, hump: { at: 420, h: 1, w: 90, soft: true },
   log: { at: 1060, h: 50, w: 110 }, rock: { at: 1060, h: 70, w: 90 }, cones: { at: 1060, h: 50, w: 120 },
-  ramp: { at: 1460, h: 40, w: 110, soft: true }, puddle: { at: 1740, h: 18, w: 150, soft: true }, ice: { at: 1740, h: 18, w: 190, soft: true },
+  ramp: { at: 1460, h: 40, w: 110, soft: true }, puddle: { at: 230, h: 18, w: 150, soft: true }, ice: { at: 230, h: 18, w: 190, soft: true },
   roller: { at: 2000, h: 70, w: 76 }, ball: { at: 2000, h: 70, w: 76 } };
-const JUMP = 560, BUMP_FUEL = .1, BUMP_COINS = 10, ROLL = 200;
+const JUMP = 560, BUMP_FUEL = .1, BUMP_COINS = 10, SAFE_SPEED = 230, SKID_COINS = 5, WET_WARN = 480, ROLL = 200;
 
 function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
 
@@ -587,10 +619,11 @@ function buildLevel(n) {
     for (let j = scenery.length - 1; j >= 0; j--) if (Math.abs(scenery[j].x - lx) < 400) scenery.splice(j, 1);
     scenery.push({ x: lx, kind, flip: false, name, tall, h: tall < 340 ? 1.4 : 1 });
   });
+  if (isWinter(t)) for (const lx of [forks[0].a - 500, finish - 420]) scenery.push({ x: lx, kind: 'tomte', flip: false }); // Tomten waves twice a level, so he stays special
   const clouds = Array.from({ length: 9 }, () => ({ x: rand() * 2600, y: 40 + rand() * 170, s: .6 + rand() * .8 }));
   let maxCoins = items.filter(i => i.kind === 'coin' && i.lane === 0).length;
   for (const f of forks) maxCoins += Math.max(...[-1, 1, MID].map(l => items.filter(i => i.kind === 'coin' && i.lane === l && i.x > f.a && i.x < f.b).length));
-  return { n, theme: t, items, forks, obs, critter: t.critter, finish, scenery, sights: scenery.filter(s => s.name), clouds, maxCoins, ph: n * 1.7, seen: 0 };
+  return { n, theme: t, items, forks, obs, critter: t.critter, finish, scenery, sights: scenery.filter(s => s.name), clouds, maxCoins, ph: n * 1.7, seen: 0, litter: [] };
 }
 
 const baseY = (L, x) => 436 + 32 * Math.sin(x * .0011 + L.ph) + 16 * Math.sin(x * .0027 + L.ph * 2);
@@ -647,6 +680,9 @@ const HORN = {
   duck() { beep(620, 0, .13, .1, 'square', .6); beep(620, .19, .13, .1, 'square', .6); beep(620, .38, .18, .1, 'square', .55); },
   cow() { beep(210, 0, .3, .12, 'sawtooth', 1.25); beep(260, .28, .65, .12, 'sawtooth', .62); },
   train() { [294, 370, 440].forEach(f => { beep(f, 0, .32, .07, 'sawtooth'); beep(f, .4, .75, .07, 'sawtooth'); }); },
+  bjallror() { for (let i = 0; i < 8; i++) { beep(1568, i * .09, .1, .05, 'sine'); beep(2093, i * .09 + .03, .08, .04, 'sine'); } },
+  varg() { beep(280, 0, .5, .1, 'sine', 1.9); beep(532, .5, 1, .1, 'sine', .62); },
+  hoho() { [0, .36, .72].forEach(t => { beep(150, t, .26, .17, 'triangle', .8); beep(300, t, .26, .06, 'sine', .8); }); },
   fanfare() { [523, 659, 784].forEach((f, i) => beep(f, i * .12, .13, .12, 'square')); beep(1047, .36, .45, .12, 'square'); },
 };
 const sfx = {
@@ -654,7 +690,7 @@ const sfx = {
   can() { [392, 523, 659, 784].forEach((f, i) => beep(f, i * .07, .22, .13)); },
   tap() { beep(620, 0, .1, .09, 'sine', 1.4); },
   fork() { beep(440, 0, .16, .08, 'sine'); beep(660, .12, .2, .08, 'sine'); },
-  honk(id = (S.trial && S.trial.slot === 'horn' ? S.trial.id : save.equip.horn)) { HORN[id](); },
+  honk(id = loadout().horn) { HORN[id](); },
   low() { beep(330, 0, .16, .08, 'sine'); beep(262, .2, .24, .08, 'sine'); },
   champ() { [523, 523, 523, 659, 784, 659, 784, 1047, 1047, 1319].forEach((f, i) => { beep(f, i * .17, .34, .12); beep(f / 2, i * .17, .34, .06, 'square'); }); },
   win() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, i * .13, .3, .13)); },
@@ -675,7 +711,7 @@ const V_MAX = 400, ACCEL = 300, COAST = 380, STOP_BRAKE = 420;
 function resetRun(n) {
   S.L = buildLevel(n); S.x = 180; S.v = 0; S.lane = 0; S.fuel = 1; S.coins = 0; S.gas = false; S.emptyT = 0; S.doneT = 0;
   S.lowDone = false; S.activeFork = null; S.parts = []; S.heldAt = 0; S.lidMood = 0; tuneAt = 0;
-  S.spare = skill('spare'); S.blade = isWinter(THEMES[n]) ? skill('plog') : 0; S.hop = S.hopV = S.stunT = S.slowT = S.iceT = S.waitT = 0; S.back = false;
+  S.spare = skill('spare') + (isWinter(THEMES[n]) ? skill('pulka') : 0); S.blade = isWinter(THEMES[n]) ? skill('plog') : 0; S.hop = S.hopV = S.stunT = S.slowT = S.iceT = S.waitT = 0; S.back = false;
   S.L.items.forEach(i => i.got = false);
 }
 
@@ -732,9 +768,10 @@ function hitObstacle(o) {
   o.live = false;
   const y = roadY(S.L, o.x, o.lane) - 30;
   if (o.kind === 'puddle') { // a snowdrift up north
-    const snow = S.L.theme.snowy;
+    const snow = S.L.theme.snowy, fast = S.v > SAFE_SPEED;
     S.slowT = 1.1; sfx.splash();
-    for (let i = 0; i < 24; i++) spark(S.x + 30, y + 16, snow ? '#fff' : i % 2 ? '#7cc7ee' : '#b7e3f7');
+    for (let i = 0; i < (fast ? 40 : 8); i++) spark(S.x + 30, y + 16, snow ? '#fff' : i % 2 ? '#7cc7ee' : '#b7e3f7');
+    if (fast) skid();
     return;
   }
   if (o.kind === 'hump') { hop(250); return; }
@@ -743,7 +780,7 @@ function hitObstacle(o) {
     for (let i = 0; i < 12; i++) S.parts.push({ x: S.x, y, vx: -120 + i * 22, vy: -200, life: .7, age: 0, r: 10, c: '#f6c21c', g: 300, shape: 'stars' });
     return;
   }
-  if (o.kind === 'ice') { if (!skill('dubbar')) S.iceT = 1.2; sfx.ice(); return; }
+  if (o.kind === 'ice') { sfx.ice(); if (S.v > SAFE_SPEED && !skill('dubbar')) skid(); return; }
   if (S.blade) { // the plough blade takes one bump a level on winter roads
     S.blade--; sfx.boing();
     for (let i = 0; i < 12; i++) spark(o.x, y, '#d9f0fa');
@@ -752,19 +789,27 @@ function hitObstacle(o) {
   S.stunT = .7; S.v = 0; S.honkT = .5; sfx.bump();
   const spilt = Math.min(BUMP_FUEL, S.fuel), lost = Math.min(BUMP_COINS, S.coins);
   S.fuel -= spilt;
-  if (spilt) lossBadge('fuel', `−${Math.round(spilt * 100)}%`);
+  if (spilt) { lossBadge('fuel'); S.L.litter.push({ kind: 'spill', x: S.x - 60, lane: S.lane, age: 0 }); }
   if (lost) lossBadge('coins', `−${lost}`);
   S.coins -= lost; save.total = Math.max(0, save.total - lost); persist();
   $('coinN').textContent = S.coins;
-  for (let i = 0; i < lost; i++) S.parts.push({ x: S.x + 20, y: y - 60, vx: -280 + i * 60, vy: -420 - i % 3 * 90, life: 1, age: 0, r: 20, c: '#f6c21c', g: 900 });
-  if (spilt) for (let i = 0; i < 8; i++) S.parts.push({ x: S.x - 110, y: y - 30, vx: -190 + i * 34, vy: -160 - i % 2 * 120, life: .8, age: 0, r: 9, c: '#2fb36a', g: 700 });
+  spillCoins(lost);
   for (let i = 0; i < 7; i++) S.parts.push({ x: S.x, y: y - 130, vx: Math.cos(i * .9) * 130, vy: Math.sin(i * .9) * 80 - 40, life: .75, age: 0, r: 12, c: '#f6c21c', g: 0, shape: 'stars' });
   for (let i = 0; i < 10; i++) spark(o.x, y, o.kind === 'rock' ? '#9aa2b2' : o.kind === 'log' ? '#8a5c34' : o.kind === 'cones' ? '#f08a2c' : '#e0b65a');
 }
-function lossBadge(id, text) { // what a bump cost, right where the fuel and the coins are counted
+function lossBadge(id, text) { // the fuel bar shakes by itself, the coin count also says what went
   const box = $(id), badge = box.querySelector('.loss');
-  badge.textContent = text;
-  for (const el of [box, badge]) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); }
+  if (badge) badge.textContent = text;
+  for (const el of [box, badge]) if (el) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); }
+}
+function spillCoins(n) {
+  for (let i = 0; i < n; i++) S.L.litter.push({ kind: 'coin', x: S.x - 20, lane: S.lane, h: 70, vx: -90 - i * 42, vh: 330 + i % 3 * 110, phase: i });
+}
+function skid() { // too fast on water or ice: the car slides and coins fly out, but no petrol goes
+  S.iceT = 1.4; S.honkT = .5;
+  const lost = Math.min(SKID_COINS, S.coins);
+  S.coins -= lost; save.total = Math.max(0, save.total - lost); persist(); $('coinN').textContent = S.coins;
+  if (lost) { lossBadge('coins', `−${lost}`); spillCoins(lost); }
 }
 function cleared(o) { // a clean jump earns a coin
   S.coins++; save.total++; persist(); $('coinN').textContent = S.coins;
@@ -794,12 +839,14 @@ function spark(x, y, c) {
 const TRAIL = {
   hearts: ['#f2577d'], stars: ['#f6c21c'], bubbles: ['rgba(150,220,250,.75)'], rainbow: ['#f4614d', '#f6a91c', '#f6e21c', '#3fc36a', '#1d9bf0', '#7a5cd6'],
   notes: ['#12306b', '#7a5cd6', '#1d9bf0'], flowers: ['#f2577d', '#fffaf0', '#f6c21c', '#7a5cd6'], snow: ['#fff', '#bfe6fb'], fire: ['#f4614d', '#f6a91c', '#f6e21c'],
+  flingor: ['#fff', '#d9f0fa'], pepparkakor: ['#b5733a', '#c98a4c'], norrsken: ['#22d3a6', '#7a5cd6', '#3fc36a'],
 };
+const TRAIL_SHAPE = { flingor: 'stars', pepparkakor: 'hearts' };
 function trail(x, y) {
-  const kind = S.trial && S.trial.slot === 'trail' ? S.trial.id : save.equip.trail;
+  const kind = loadout().trail;
   if (!kind) return puff(x, y);
   const C = TRAIL[kind];
-  S.parts.push({ x, y: y + (Math.random() - .5) * 26, vx: -70 - Math.random() * 40, vy: -30 - Math.random() * 40, life: 1.1, age: 0, g: -14, r: 12, shape: kind,
+  S.parts.push({ x, y: y + (Math.random() - .5) * 26, vx: -70 - Math.random() * 40, vy: -30 - Math.random() * 40, life: 1.1, age: 0, g: -14, r: 12, shape: TRAIL_SHAPE[kind] || kind,
     c: C[Math.floor(Math.random() * C.length)] });
 }
 function puff(x, y) { S.parts.push({ x, y, vx: -60 - Math.random() * 40, vy: -24, life: .7, age: 0, r: 8, c: 'rgba(255,255,255,.75)', g: -10, grow: 22 }); }
@@ -865,6 +912,13 @@ function update(dt) {
       if (S.v < 5 || (blocker.kind === 'slow' && room < 70)) { S.waitT += dt; if (S.waitT > 3.2) shoo(blocker); } // animals wander off by themselves too
     }
     if (S.lane && S.activeFork && S.x >= S.activeFork.b) { S.lane = 0; S.activeFork = null; }
+    for (const m of L.litter) { // what a bump spilt stays where it lands
+      if (m.kind === 'spill') m.age = Math.min(1, m.age + dt * 1.6);
+      else if (m.vh || m.h) {
+        m.x += m.vx * dt; m.h += m.vh * dt; m.vh -= 1200 * dt;
+        if (m.h <= 0) { m.h = 0; m.vh = m.vh < -160 ? -m.vh * .35 : 0; m.vx = m.vh ? m.vx * .5 : 0; }
+      }
+    }
     const pit = S.lane && S.activeFork && S.activeFork.dead === S.lane ? S.activeFork : null;
     if (pit && S.back) { // backing away from the barrier to choose again
       S.v = -320;
@@ -879,7 +933,7 @@ function update(dt) {
     S.x += step; S.wheel += step / 32;
     if (!finished) S.fuel = Math.max(0, S.fuel - Math.max(0, step) / (TANK * (1 + .25 * skill('tank') + (isWinter(L.theme) ? .1 * skill('varme') : 0))));
     if (S.fuel <= 0 && S.spare && !finished) { // the spare can tips in by itself
-      S.spare = 0; S.fuel = .5; S.lowDone = false; sfx.can();
+      S.spare--; S.fuel = .5; S.lowDone = false; sfx.can();
       for (let i = 0; i < 16; i++) spark(S.x, roadY(L, S.x, S.lane) - 100, i % 2 ? '#2fb36a' : '#f4614d');
     }
     const magnet = skill('magnet');
@@ -907,6 +961,9 @@ function update(dt) {
       if (dx < o.w / 2 + 12 && S.hop < o.h) hitObstacle(o);
       else if (o.x < S.x - 110) { o.live = false; if (S.hop > 0 || o.rolling) cleared(o); }
     }
+    const wet = L.obs.find(o => o.live && (o.kind === 'puddle' || (o.kind === 'ice' && !skill('dubbar'))) && obstacleOnRoute(o) && o.x > S.x && o.x - S.x < WET_WARN);
+    if (wet && !wet.warned) { wet.warned = true; beep(880, 0, .12, .07, 'sine'); beep(880, .16, .12, .07, 'sine'); }
+    $('gas').classList.toggle('ease', !!wet && S.v > SAFE_SPEED);
     if (S.fuel < .25 && !S.lowDone && !finished) { S.lowDone = true; sfx.low(); }
 
     if (dry && !finished && S.v < 1) {
@@ -1056,6 +1113,13 @@ function strip(L, camX, lane, close) {
   for (let x = x0; x <= x1; x += 18) g.lineTo(x, roadY(L, x, lane));
   if (close) { g.lineTo(x1, close); g.lineTo(x0, close); g.closePath(); }
 }
+function drawWetSign(x, y, cold) { // the yellow road sign: slow down, water or ice ahead
+  rect(0, x - 5, y - 96, 10, 96, '#8d95a5');
+  g.lineJoin = 'round'; g.lineWidth = 12; g.strokeStyle = '#e8483f'; g.fillStyle = '#ffd84d';
+  g.beginPath(); g.moveTo(x, y - 172); g.lineTo(x + 46, y - 92); g.lineTo(x - 46, y - 92); g.closePath(); g.stroke(); g.fill();
+  if (cold) { g.strokeStyle = '#1d6fb8'; g.lineWidth = 4; g.lineCap = 'round'; g.beginPath(); for (let i = 0; i < 3; i++) { const a = i * 1.0472, c = Math.cos(a) * 19, q = Math.sin(a) * 19; g.moveTo(x - c, y - 118 - q); g.lineTo(x + c, y - 118 + q); } g.stroke(); }
+  else blob(0, [[x - 16, y - 108, 7], [x + 16, y - 108, 7], [x, y - 124, 9]], '#1d6fb8');
+}
 function drawBarrier(x, y) { // where a road ends: tall and bright enough to read from the junction
   for (const dx of [-8, 8]) rect(0, x + dx - 5, y - 74, 10, 96, '#5b5a62');
   for (let i = 0; i < 6; i++) rect(0, x - 62 + i * 21, y - 62, 21, 30, i % 2 ? '#fff' : '#e8483f');
@@ -1199,6 +1263,26 @@ const SPRITE = {
     g.strokeStyle = '#f6c21c'; g.lineWidth = 7; g.setLineDash([16, 14]); g.beginPath(); g.moveTo(-132, -150); g.quadraticCurveTo(0, -246, 132, -150); g.stroke(); g.setLineDash([]);
     blob(c, [[0, -112, 64]], '#8fd6f5'); g.strokeStyle = '#fffaf0'; g.lineWidth = 7; g.beginPath(); g.ellipse(0, -112, 64, 20, 0, 0, 7); g.stroke();
     blob(c, [[-20, -128, 18], [18, -96, 22]], '#6fbf73');
+  },
+  tomte(c) { // Tomten, waving from the roadside
+    for (const x of [-20, 6]) panel(x, -22, 22, 22, 6, '#2b2d38');
+    g.fillStyle = '#d6322c'; g.beginPath(); g.moveTo(-32, -18); g.quadraticCurveTo(-34, -84, 0, -86); g.quadraticCurveTo(34, -84, 32, -18); g.closePath(); g.fill();
+    rect(c, -32, -36, 64, 9, '#2b2d38'); rect(c, -7, -38, 14, 13, '#f6c21c'); rect(c, -4, -84, 8, 46, '#fff');
+    g.strokeStyle = '#d6322c'; g.lineWidth = 15; g.lineCap = 'round'; g.beginPath(); g.moveTo(26, -70); g.lineTo(52 + Math.sin(S.t * 5) * 7, -108); g.stroke(); blob(c, [[53 + Math.sin(S.t * 5) * 7, -114, 9]], '#fff');
+    blob(c, [[0, -108, 23]], '#f6cfae'); blob(c, [[-16, -92, 13], [0, -86, 15], [16, -92, 13]], '#fff'); blob(c, [[-8, -112, 2.800], [8, -112, 2.800]], '#12306b'); blob(c, [[0, -104, 5]], '#ee9d86');
+    poly([[-25, -116], [0, -162], [34, -142], [25, -116]], '#d6322c'); panel(-29, -124, 58, 12, 6, '#fff'); blob(c, [[38, -138, 9]], '#fff');
+  },
+  julgran(c) {
+    rect(c, -8, -24, 16, 24, '#6d4a2e'); tri(c, 0, -170, 34, -106, '#2f8a4c'); tri(c, 0, -134, 48, -66, '#2f8a4c'); tri(c, 0, -96, 60, -18, '#2f8a4c');
+    g.fillStyle = '#f6c21c'; shapePath('stars', 0, -172, 16); g.fill();
+    blob(c, [[-24, -94, 5], [28, -40, 5], [-36, -34, 5]], '#e8483f'); blob(c, [[20, -86, 5], [-8, -56, 5], [10, -30, 5]], '#f6c21c'); blob(c, [[0, -124, 5], [-20, -60, 4]], '#fff');
+    rect(c, 28, -18, 22, 18, '#e8483f'); rect(c, 36, -18, 6, 18, '#f6c21c');
+  },
+  snolykta(c) { // a lantern of snowballs with a candle inside
+    const row = [[-34, 5], [-12, 5], [12, 5], [34, 5]];
+    blob(c, [[0, -30, 30]], '#ffe7a0');
+    blob(c, [[-36, -12, 14], [-12, -12, 14], [12, -12, 14], [36, -12, 14], [-24, -36, 14], [24, -36, 14], [-12, -58, 14], [12, -58, 14], [0, -78, 14]], '#fbfdff');
+    blob(c, [[0, -30, 13]], '#f6a81c'); blob(c, [[0, -30, 7]], '#fff3a8');
   },
   manor(c) { // Mårbacka, a Värmland manor
     rect(c, -140, -130, 280, 130, '#f1dc9a'); poly([[-154, -130], [-110, -196], [110, -196], [154, -130]], '#6a5a58');
@@ -1470,13 +1554,26 @@ function drawMoose(w) {
   }
 }
 function loadout() {
-  const e = { ...save.equip };
+  const e = { ...gear(S.screen === 'shop' ? S.season === 'winter' : isWinter(S.L.theme)) };
   if (S.trial) e[S.trial.slot] = S.trial.id;
-  if (S.screen === 'shop' ? S.tab === 'snow' : isWinter(S.L.theme)) e.vehicle = e.snow;
   return e;
 }
 function drawHat(id) {
-  if (id === 'cap') {
+  if (id === 'toppluva') {
+    g.fillStyle = '#e8483f'; g.beginPath(); g.arc(0, 0, 40, Math.PI, 0); g.closePath(); g.fill();
+    panel(-44, -8, 88, 18, 8, '#fff'); for (const x of [-22, 0, 22]) rect(0, x - 3, -34, 6, 24, '#fff'); blob(0, [[0, -46, 15]], '#fff');
+  } else if (id === 'oronlappar') {
+    g.strokeStyle = '#7a5cd6'; g.lineWidth = 8; g.beginPath(); g.arc(0, 8, 44, Math.PI, 0); g.stroke(); blob(0, [[-44, 10, 18], [44, 10, 18]], '#f2577d'); blob(0, [[-48, 6, 6], [40, 6, 6]], '#ffd0dc');
+  } else if (id === 'renhorn') {
+    g.strokeStyle = '#7a5232'; g.lineWidth = 9; g.lineCap = 'round'; g.beginPath();
+    for (const d of [-1, 1]) { g.moveTo(d * 18, 0); g.quadraticCurveTo(d * 32, -36, d * 22, -66); g.moveTo(d * 26, -28); g.lineTo(d * 50, -42); g.moveTo(d * 28, -48); g.lineTo(d * 48, -66); } g.stroke();
+  } else if (id === 'hog') { // the snowman's hat
+    panel(-46, -8, 92, 12, 6, '#2b2d38'); rect(0, -30, -68, 60, 62, '#2b2d38'); rect(0, -30, -22, 60, 12, '#e8483f');
+  } else if (id === 'lucia') {
+    g.strokeStyle = '#3f8f4c'; g.lineWidth = 12; g.beginPath(); g.ellipse(0, -2, 44, 12, 0, 0, 7); g.stroke();
+    [-30, -10, 10, 30].forEach(x => { rect(0, x - 4, -40, 8, 34, '#fff'); g.fillStyle = '#f6a81c'; g.beginPath(); g.ellipse(x, -50, 6, 11, 0, 0, 7); g.fill(); });
+    blob(0, [[-34, 4, 5], [0, 8, 5], [34, 4, 5]], '#e8483f');
+  } else if (id === 'cap') {
     g.fillStyle = '#1d9bf0'; g.beginPath(); g.arc(0, 0, 40, Math.PI, 0); g.closePath(); g.fill();
     g.fillStyle = '#12306b'; g.beginPath(); g.ellipse(36, 0, 34, 8, .1, 0, 7); g.fill();
     g.fillStyle = '#f6c21c'; g.beginPath(); g.arc(0, -16, 9, 0, 7); g.fill();
@@ -1516,7 +1613,13 @@ function drawHat(id) {
   }
 }
 function drawBack(id) { // origin at the rear of the car, on the boot
-  if (id === 'flag') {
+  if (id === 'skidor') {
+    g.save(); g.rotate(-.12); panel(-16, -142, 10, 150, 5, '#e8483f'); panel(2, -142, 10, 150, 5, '#1d9bf0'); rect(0, -22, -66, 40, 8, '#2b2d38'); g.restore();
+  } else if (id === 'sack') {
+    g.fillStyle = '#b3202e'; g.beginPath(); g.moveTo(-14, -56); g.quadraticCurveTo(-62, -40, -48, -4); g.lineTo(34, -4); g.quadraticCurveTo(46, -40, 2, -56); g.fill();
+    rect(0, -16, -62, 22, 8, '#f6c21c'); rect(0, -18, -82, 12, 22, '#22b3a6'); rect(0, -4, -86, 14, 26, '#f6c21c');
+  } else if (id === 'julgran') { g.save(); g.scale(.62, .62); SPRITE.julgran({}); g.restore();
+  } else if (id === 'flag') {
     g.fillStyle = '#8d95a5'; g.fillRect(-3, -112, 6, 112);
     const w = Math.sin(S.t * 6) * 4;
     g.fillStyle = '#1668b5'; g.beginPath(); g.moveTo(3, -110); g.quadraticCurveTo(-30, -110 + w, -62, -106); g.lineTo(-62, -66); g.quadraticCurveTo(-30, -70 + w, 3, -70); g.fill();
@@ -1547,6 +1650,12 @@ function drawBack(id) { // origin at the rear of the car, on the boot
 }
 function drawWheel(id, r, color) {
   g.fillStyle = '#2b2d38'; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  if (id === 'vinterdack' || id === 'kedjor') { for (let i = 0; i < 12; i++) { g.rotate(.5236); g.fillStyle = '#2b2d38'; g.fillRect(r - 2, -4, 5, 8); } }
+  if (id === 'pepparkaka') {
+    g.fillStyle = '#b5733a'; g.beginPath(); for (let i = 0; i < 16; i++) { const a = i * .3927, q = r * (i % 2 ? .9 : 1.04); g.lineTo(Math.cos(a) * q, Math.sin(a) * q); } g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, r * .68, 0, 7); g.stroke(); blob(0, [[0, 0, r * .16]], '#fff');
+    return;
+  }
   if (id === 'monster') { g.fillStyle = '#2b2d38'; for (let i = 0; i < 14; i++) { g.rotate(.4488); g.fillRect(r - 3, -5, 8, 10); } }
   const hub = r * .53;
   if (id === 'wagon') {
@@ -1566,9 +1675,13 @@ function drawWheel(id, r, color) {
     return;
   }
   g.fillStyle = '#f4f1e8'; g.beginPath(); g.arc(0, 0, id === 'monster' ? hub * .9 : hub, 0, 7); g.fill();
+  if (id === 'kedjor') { g.strokeStyle = '#d7dbe4'; g.lineWidth = 4; g.beginPath(); for (let i = 0; i < 6; i++) { g.rotate(1.0472); g.moveTo(-r * .52, r * .78); g.lineTo(r * .52, r * .78); } g.stroke(); }
   if (id === 'flower') {
     g.fillStyle = '#f2577d'; for (let i = 0; i < 6; i++) { g.rotate(1.0472); g.beginPath(); g.arc(hub * .55, 0, hub * .36, 0, 7); g.fill(); }
     g.fillStyle = '#f6c21c'; g.beginPath(); g.arc(0, 0, hub * .36, 0, 7); g.fill();
+  } else if (id === 'flinga' || id === 'vinterdack') {
+    g.strokeStyle = '#1d9bf0'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath();
+    for (let i = 0; i < 6; i++) { const a = i * 1.0472, c = Math.cos(a) * hub * .84, q = Math.sin(a) * hub * .84; g.moveTo(0, 0); g.lineTo(c, q); } g.stroke();
   } else if (id === 'star') {
     g.fillStyle = '#f6c21c'; shapePath('stars', 0, 0, hub * .76); g.fill();
   } else if (id === 'football') {
@@ -1657,6 +1770,28 @@ const VEHICLE = {
         blob(0, [[x + 34, -54, 14]], '#d7dbe4'); poly([[x + 26, -64], [x + 30, -82], [x + 40, -66]], '#6b7280'); blob(0, [[x + 42, -56, 3]], '#2b2d38');
         g.strokeStyle = '#8d95a5'; g.lineWidth = 8; g.beginPath(); g.moveTo(x - 32, -44); g.quadraticCurveTo(x - 50, -58, x - 38, -68); g.stroke();
       });
+    },
+  },
+  bandvagn: { // two linked cabins on tracks
+    seat: [58, -82], moose: 96, wheels: [], back: [-150, -112],
+    under() { panel(16, -134, 96, 56, 12, SKY_GLASS); },
+    over(color) {
+      track(8, 148, 38); track(-158, -14, 38); rect(0, -18, -44, 30, 10, '#2b2d38');
+      panel(4, -92, 136, 52, 12, color); rect(0, 4, -146, 12, 60, color); rect(0, 108, -146, 12, 60, color); panel(0, -152, 124, 12, 6, color);
+      panel(-152, -118, 132, 78, 14, color); panel(-140, -106, 40, 28, 7, SKY_GLASS); panel(-88, -106, 40, 28, 7, SKY_GLASS); headlamp(138, -62);
+    },
+  },
+  slade: { // Santa's sleigh, with Rudolf out in front
+    seat: [-58, -66], moose: 118, wheels: [], back: [-128, -62],
+    under(color) { panel(-122, -96, 40, 76, 16, color); },
+    over(color) {
+      g.fillStyle = color; g.beginPath(); g.moveTo(-126, -24); g.lineTo(-126, -62); g.quadraticCurveTo(-60, -44, -8, -56); g.quadraticCurveTo(26, -64, 30, -92); g.quadraticCurveTo(48, -40, 12, -24); g.closePath(); g.fill();
+      panel(-120, -36, 136, 7, 3, '#f6c21c'); for (const x of [-100, -14]) rect(0, x, -24, 8, 18, '#f6c21c'); ski(-138, 26);
+      g.strokeStyle = '#7a5232'; g.lineWidth = 4; g.beginPath(); g.moveTo(24, -60); g.lineTo(90, -54); g.stroke();
+      const run = calm ? 0 : Math.sin(S.wheel * .7) * 7;
+      rect(0, 92 + run, -34, 7, 34, '#6d4a2e'); rect(0, 128 - run, -34, 7, 34, '#6d4a2e');
+      g.fillStyle = '#8a5c34'; g.beginPath(); g.ellipse(112, -46, 34, 15, 0, 0, 7); g.fill(); blob(0, [[146, -64, 13]], '#8a5c34'); blob(0, [[159, -62, 6]], '#e8483f');
+      g.strokeStyle = '#6d4a2e'; g.lineWidth = 4; g.beginPath(); g.moveTo(142, -76); g.lineTo(134, -100); g.moveTo(138, -88); g.lineTo(124, -92); g.moveTo(148, -76); g.lineTo(154, -98); g.stroke();
     },
   },
   pistmaskin: { // the groomer from the ski slopes
@@ -1867,8 +2002,18 @@ function draw() {
     if (f.dead) drawBarrier(f.end, roadY(L, f.end, f.dead));
   }
   drawFinish(L.finish + 60, baseY(L, L.finish + 60));
+  for (const m of L.litter) {
+    if (m.x < camX - 120 || m.x > camX + vw + 120) continue;
+    const y = roadY(L, m.x, m.lane);
+    if (m.kind === 'coin') { drawCoin(m.x, y - 4 - m.h, m.phase); continue; }
+    const s = smooth(m.age); // a petrol puddle, with the rainbow sheen petrol has on a wet road
+    g.fillStyle = '#2d3048'; g.beginPath(); g.ellipse(m.x, y + 14, 92 * s, 15 * s, 0, 0, 7); g.ellipse(m.x - 66 * s, y + 21, 38 * s, 8 * s, 0, 0, 7); g.fill();
+    g.fillStyle = '#7a5cd6'; g.beginPath(); g.ellipse(m.x - 22, y + 12, 44 * s, 6 * s, 0, 0, 7); g.fill();
+    g.fillStyle = '#22d3a6'; g.beginPath(); g.ellipse(m.x + 18, y + 15, 34 * s, 4 * s, 0, 0, 7); g.fill();
+  }
 
   for (const o of L.obs) if (o.live && o.x > camX - 200 && o.x < camX + vw + 200) drawObstacle(L, o);
+  for (const o of L.obs) if ((o.kind === 'puddle' || o.kind === 'ice') && o.x - WET_WARN > camX - 120 && o.x - WET_WARN < camX + vw + 120) drawWetSign(o.x - WET_WARN, baseY(L, o.x - WET_WARN), o.kind === 'ice' || T.snowy);
   for (const it of L.items) {
     if (it.got || it.x < camX - 80 || it.x > camX + vw + 80) continue;
     const y = roadY(L, it.x, it.lane) - it.lift;
@@ -1957,7 +2102,11 @@ function drawShopCar() {
   const k = Math.min(shopW / 340, shopH / 300);
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, shopW, shopH);
   g.translate(shopW / 2 + 16 * k, shopH - 18 * k); g.scale(k, k);
-  g.fillStyle = '#d9b77a'; g.beginPath(); g.ellipse(0, 6, 170, 16, 0, 0, 7); g.fill();
+  g.fillStyle = S.season === 'winter' ? '#fff' : '#d9b77a'; g.beginPath(); g.ellipse(0, 6, 170, 16, 0, 0, 7); g.fill();
+  if (S.season === 'winter') {
+    g.save(); g.translate(-146, 0); g.scale(.9, .9); SPRITE.snowman({}); g.restore();
+    g.save(); g.translate(142, 0); g.scale(.8, .8); SPRITE.tomte({}); g.restore();
+  }
   drawCar(0, 0, 0);
   for (const p of S.parts) { g.globalAlpha = 1 - p.age / p.life; drawPart(p, 1 - p.age / p.life); }
   g.globalAlpha = 1;
@@ -1966,12 +2115,14 @@ function drawShopCar() {
 const priceOf = (cat, it) => it.prices ? it.prices[skill(it.id)] : it.price;
 const isOwned = (cat, it) => it.prices ? skill(it.id) >= it.prices.length : save.owned[cat].includes(it.id);
 const slotOf = (cat, it) => it.slot || SLOT_OF[cat];
-const isWorn = (cat, it) => !it.prices && save.equip[slotOf(cat, it)] === it.id;
+const isWorn = (cat, it) => !it.prices && gear(S.season === 'winter')[slotOf(cat, it)] === it.id;
+const wares = cat => CATALOG[cat].filter(it => S.season === 'winter' ? it.w : it.w !== 2);
 function picture(c, cat, it) { // each stall item is drawn with the same code the car uses
   const was = g, w = c.width = c.height = 200;
   g = c.getContext('2d'); g.translate(w / 2, w / 2);
-  if (cat === 'vehicle' || (cat === 'snow' && !it.prices)) {
-    g.translate(0, 74); g.scale(.62, .62); drawCar(0, 0, 0, { vehicle: it.id, paint: save.equip.paint, tyre: save.equip.tyre });
+  if (cat === 'vehicle') {
+    const e = gear(it.w === 2);
+    g.translate(0, 74); g.scale(.62, .62); drawCar(0, 0, 0, { vehicle: it.id, paint: e.paint, tyre: e.tyre });
   } else if (cat === 'horn') {
     if (it.pic === 'moose') { g.scale(.4, .4); g.translate(0, 196); drawMoose(376); }
     else if (it.pic === 'horn') { g.translate(-100, -100); g.scale(2, 2); g.fillStyle = NAVY; g.fill(new Path2D('M12 42h20L78 16v68L32 58H12z')); }
@@ -1986,8 +2137,8 @@ function picture(c, cat, it) { // each stall item is drawn with the same code th
     g.translate(it.id === 'flag' ? 26 : it.id === 'spoiler' ? -6 : it.id === 'kite' || it.id === 'rod' ? 42 : 16, it.id === 'spoiler' ? 26 : it.id === 'pinwheel' ? 66 : 84); g.scale(it.id === 'spoiler' ? 1.9 : tall, it.id === 'spoiler' ? 1.9 : tall); drawBack(it.id);
   }
   else if (it.slot === 'trail') {
-    const C = it.id === 'rainbow' ? ['#f4614d', '#f6e21c', '#3fc36a', '#1d9bf0'] : it.id === 'snow' ? ['#8fd0f0', '#bfe6fb'] : TRAIL[it.id];
-    [[-46, 30, 26], [0, -6, 34], [50, -44, 24], [52, 34, 18]].forEach(([x, y, r], i) => drawPart({ x, y, r, shape: ['rainbow', 'snow', 'fire'].includes(it.id) ? 'x' : it.id, c: C[i % C.length] }, 1));
+    const C = it.id === 'rainbow' ? ['#f4614d', '#f6e21c', '#3fc36a', '#1d9bf0'] : it.id === 'snow' || it.id === 'flingor' ? ['#8fd0f0', '#bfe6fb'] : TRAIL[it.id];
+    [[-46, 30, 26], [0, -6, 34], [50, -44, 24], [52, 34, 18]].forEach(([x, y, r], i) => drawPart({ x, y, r, shape: TRAIL_SHAPE[it.id] || (['rainbow', 'snow', 'fire', 'norrsken'].includes(it.id) ? 'x' : it.id), c: C[i % C.length] }, 1));
   } else skillIcon(it.id);
   g = was;
 }
@@ -2004,6 +2155,9 @@ function skillIcon(id) {
     g.lineCap = 'butt'; g.lineWidth = 42; g.strokeStyle = '#e8483f'; g.beginPath(); g.arc(0, 0, 50, Math.PI, 0, true); g.stroke();
     g.beginPath(); g.moveTo(-50, 0); g.lineTo(-50, -40); g.moveTo(50, 0); g.lineTo(50, -40); g.stroke();
     g.strokeStyle = '#d7dbe4'; g.beginPath(); g.moveTo(-50, -38); g.lineTo(-50, -72); g.moveTo(50, -38); g.lineTo(50, -72); g.stroke();
+  } else if (id === 'pulka') {
+    rect(0, -80, -14, 150, 30, '#e8483f'); panel(-84, 18, 176, 10, 5, '#2b2d38');
+    g.save(); g.translate(-60, -80); g.scale(2, 2); g.fillStyle = '#2fb36a'; g.fill(canPath); g.fillStyle = '#12306b'; g.fill(canCap); g.restore();
   } else if (id === 'dubbar') {
     drawWheel('plain', 70, '#e8483f'); g.fillStyle = '#d7dbe4';
     for (let i = 0; i < 12; i++) { const a = i * .5236; g.beginPath(); g.moveTo(Math.cos(a - .12) * 68, Math.sin(a - .12) * 68); g.lineTo(Math.cos(a) * 92, Math.sin(a) * 92); g.lineTo(Math.cos(a + .12) * 68, Math.sin(a + .12) * 68); g.fill(); }
@@ -2022,19 +2176,33 @@ function skillIcon(id) {
 }
 const CAT_ICON = {
   vehicle: '<svg viewBox="0 0 48 48"><path fill="#e8483f" d="M3 31c0-5 3-7 7-7l6-9c.7-1 1.800-1.600 3-1.600h12c1.300 0 2.400.6 3 1.700l4 8.900c4 .4 7 2.500 7 7v3c0 1-1 2-2 2H5c-1 0-2-1-2-2z"/><path fill="#c6ecfb" d="M18 23l4.300-6.500H25V23zM28 16.500h3.300L34.500 23H28z"/><circle cx="14" cy="36" r="6" fill="#2b2d38"/><circle cx="35" cy="36" r="6" fill="#2b2d38"/><circle cx="14" cy="36" r="2.400" fill="#f4f1e8"/><circle cx="35" cy="36" r="2.400" fill="#f4f1e8"/></svg>',
-  snow: '<svg viewBox="0 0 48 48"><path stroke="#1d9bf0" stroke-width="4" stroke-linecap="round" d="M24 4v40M7 14l34 20M41 14 7 34M24 12l-5-5M24 12l5-5M24 36l-5 5M24 36l5 5"/></svg>',
   paint: '<svg viewBox="0 0 48 48"><path fill="#f6c21c" d="M24 5C12 5 4 13 4 24s8 19 19 19c3 0 5-2 5-4.500 0-3-2-4-2-6 0-2 2-3.500 4.500-3.500H36c5 0 8-3 8-8C44 12 35 5 24 5z"/><circle cx="15" cy="21" r="4" fill="#e8483f"/><circle cx="24" cy="13" r="4" fill="#1d9bf0"/><circle cx="34" cy="18" r="4" fill="#22b3a6"/></svg>',
   tyre: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#2b2d38"/><circle cx="24" cy="24" r="10" fill="#f4f1e8"/><circle cx="24" cy="24" r="4" fill="#e8483f"/></svg>',
   extra: '<svg viewBox="0 0 48 48"><path fill="#f6c21c" stroke="#e6a100" stroke-width="2" stroke-linejoin="round" d="M6 38 3 14l12 10L24 8l9 16 12-10-3 24z"/></svg>',
   horn: '<svg viewBox="0 0 100 100"><path d="M12 42h20L78 16v68L32 58H12z" fill="#f6c21c"/><path d="M12 40v20" stroke="#f6c21c" stroke-width="12" stroke-linecap="round"/><path d="M86 34q8 16 0 32" stroke="#f6c21c" stroke-width="7" fill="none" stroke-linecap="round"/></svg>',
   skill: '<svg viewBox="0 0 48 48"><path fill="#f4614d" d="M28 3 9 27h12l-3 18 21-26H26z"/></svg>',
 };
+function seasonPic(c, winter) {
+  const was = g; g = c.getContext('2d');
+  c.width = 320; c.height = 200; g.translate(160, 182);
+  g.fillStyle = winter ? '#fff' : '#8ccf7b'; g.beginPath(); g.ellipse(0, 4, 156, 26, 0, 0, 7); g.fill();
+  if (winter) { g.save(); g.translate(-112, 0); g.scale(.72, .72); SPRITE.julgran({}); g.restore(); g.save(); g.translate(112, 0); g.scale(.86, .86); SPRITE.snowman({}); g.restore(); g.save(); g.translate(62, 4); g.scale(.72, .72); SPRITE.tomte({}); g.restore(); }
+  else { blob(0, [[118, -142, 30]], '#ffd84d'); g.save(); g.translate(-122, 0); g.scale(.6, .6); SPRITE.oak({ leaf: '#6fb54a' }); g.restore(); }
+  const e = gear(winter); g.save(); g.translate(winter ? -26 : 14, 0); g.scale(.6, .6); drawCar(0, 0, 0, e); g.restore();
+  g = was;
+}
 function renderShop() {
+  const picking = !S.season, cold = S.season === 'winter';
+  $('shop').classList.toggle('picking', picking); $('shop').classList.toggle('cold', cold);
+  $('seasonName').textContent = picking ? '' : cold ? 'Vinter' : 'Sommar'; $('seasonName').hidden = picking;
+  $('shopBack').setAttribute('aria-label', picking ? 'Tillbaka till kartan' : 'Tillbaka till marknaden');
   $('walletN').textContent = save.total;
-  $('tabs').innerHTML = Object.keys(CATALOG).map(c => `<button class="tab ${S.tab === c ? 'on' : ''}" data-tab="${c}" aria-label="${{ vehicle: 'Fordon', snow: 'Vinter', paint: 'Färger', tyre: 'Däck', extra: 'Tillbehör', horn: 'Tutor', skill: 'Förmågor' }[c]}">${CAT_ICON[c]}</button>`).join('');
+  if (picking) { seasonPic($('picSommar'), false); seasonPic($('picVinter'), true); return; }
+  $('walletN').textContent = save.total;
+  $('tabs').innerHTML = Object.keys(CATALOG).map(c => `<button class="tab ${S.tab === c ? 'on' : ''}" data-tab="${c}" aria-label="${{ vehicle: 'Fordon', paint: 'Färger', tyre: 'Däck', extra: 'Tillbehör', horn: 'Tutor', skill: 'Förmågor' }[c]}">${CAT_ICON[c]}</button>`).join('');
   const cat = S.tab, box = $('wares'), keep = box.scrollTop;
   box.innerHTML = '';
-  CATALOG[cat].forEach((it, i) => {
+  wares(cat).forEach((it, i) => {
     const owned = isOwned(cat, it), lvl = it.prices ? skill(it.id) : 0, b = document.createElement('button');
     const bought = owned || lvl > 0, price = priceOf(cat, it);
     b.className = `ware ${S.pick === it ? 'sel' : ''} ${isWorn(cat, it) ? 'worn' : ''} ${owned ? '' : 'priced'}`;
@@ -2053,16 +2221,16 @@ function renderShop() {
   } else $('buy').innerHTML = '';
 }
 function pickWare(it) {
-  const cat = S.tab, slot = slotOf(cat, it);
+  const cat = S.tab, slot = slotOf(cat, it), mine = gear(S.season === 'winter');
   if (it.prices) {
     S.pick = it; S.trial = null; sfx.tap();
     if (it.id === 'boing') hop(380);
     if (it.id === 'turbo') S.wheel += 3;
   } else if (isOwned(cat, it)) {
     S.pick = null; S.trial = null; sfx.tap();
-    const worn = save.equip[slot] === it.id;
-    if (!worn) save.equip[slot] = it.id;
-    else if (cat === 'extra') save.equip[slot] = null; // tap again to take it off
+    const worn = mine[slot] === it.id;
+    if (!worn) mine[slot] = it.id;
+    else if (cat === 'extra') mine[slot] = null; // tap again to take it off
     persist();
   } else { // not bought yet: try it on the car first
     S.pick = it; S.trial = { slot, id: it.id }; sfx.tap();
@@ -2080,7 +2248,7 @@ function buyPick() {
   }
   save.total -= price;
   if (it.prices) save.skills[it.id] = skill(it.id) + 1;
-  else { save.owned[cat].push(it.id); save.equip[slotOf(cat, it)] = it.id; }
+  else { save.owned[cat].push(it.id); gear(S.season === 'winter')[slotOf(cat, it)] = it.id; }
   S.trial = null;
   if (!it.prices || isOwned(cat, it)) S.pick = null;
   persist(); sfx.win();
@@ -2089,10 +2257,10 @@ function buyPick() {
 }
 function renderWinter() {
   const box = $('winterPick'); box.innerHTML = '';
-  CATALOG.snow.filter(it => !it.prices).forEach(it => {
-    const b = document.createElement('button'), owned = isOwned('snow', it), c = document.createElement('canvas');
-    b.className = `snowPick ${save.equip.snow === it.id ? 'sel' : ''}`; b.dataset.id = it.id; b.setAttribute('aria-label', owned ? it.id : `${it.id}, ${it.price} mynt`);
-    picture(c, 'snow', it); b.append(c);
+  CATALOG.vehicle.filter(it => it.w === 2).forEach(it => {
+    const b = document.createElement('button'), owned = isOwned('vehicle', it), c = document.createElement('canvas');
+    b.className = `snowPick ${save.equipW.vehicle === it.id ? 'sel' : ''}`; b.dataset.id = it.id; b.setAttribute('aria-label', owned ? it.id : `${it.id}, ${it.price} mynt`);
+    picture(c, 'vehicle', it); b.append(c);
     if (!owned) b.insertAdjacentHTML('beforeend', `<span class="tag"><svg viewBox="0 0 48 48">${COIN_SVG}</svg>${it.price}</span>`);
     box.append(b);
   });
@@ -2156,22 +2324,24 @@ const toggleMute = () => { save.muted = !save.muted; persist(); renderMute(); };
 tap('mute', toggleMute); tap('mute2', toggleMute);
 tap('champMap', () => show('map'));
 tap('winterMap', () => show('map'));
-tap('winterShop', () => { S.tab = 'snow'; show('shop'); });
+tap('winterShop', () => openSeason('winter'));
 $('winterPick').addEventListener('click', e => {
   const b = e.target.closest('.snowPick');
   if (!b) return;
   wakeAudio(); sfx.tap();
-  if (!save.owned.snow.includes(b.dataset.id)) { S.tab = 'snow'; show('shop'); return; } // the market shows what it costs
-  save.equip.snow = b.dataset.id; persist(); S.winterOk = true; startLevel(S.waiting);
+  if (!save.owned.vehicle.includes(b.dataset.id)) return openSeason('winter'); // the market shows what it costs
+  save.equipW.vehicle = b.dataset.id; persist(); S.winterOk = true; startLevel(S.waiting);
 });
 tap('winMap', () => show('map')); tap('lostMap', () => show('map'));
 tap('winAgain', () => startLevel(S.L.n)); tap('lostAgain', () => startLevel(S.L.n));
 tap('winNext', () => startLevel(S.L.n + 1));
 $('stops').addEventListener('click', e => { const b = e.target.closest('.stop'); if (b && !b.disabled) { wakeAudio(); sfx.tap(); startLevel(+b.dataset.n); } });
-tap('shopBtn', () => show('shop'));
-tap('shopBack', () => show('map'));
+function openSeason(season) { S.season = season; S.tab = 'vehicle'; show('shop'); resizeShop(); }
+tap('shopBtn', () => { S.season = null; show('shop'); });
+tap('shopBack', () => { if (S.season) { S.season = null; S.trial = S.pick = null; S.parts = []; renderShop(); } else show('map'); });
+tap('pickSommar', () => openSeason('summer')); tap('pickVinter', () => openSeason('winter'));
 $('tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) { S.tab = b.dataset.tab; S.trial = S.pick = null; sfx.tap(); renderShop(); } });
-$('wares').addEventListener('click', e => { const b = e.target.closest('.ware'); if (b) { wakeAudio(); pickWare(CATALOG[S.tab][+b.dataset.i]); } });
+$('wares').addEventListener('click', e => { const b = e.target.closest('.ware'); if (b) { wakeAudio(); pickWare(wares(S.tab)[+b.dataset.i]); } });
 $('buy').addEventListener('click', e => { if (e.target.closest('#buyBtn')) { wakeAudio(); buyPick(); } });
 
 $('act').addEventListener('pointerdown', e => { e.preventDefault(); act(); });
