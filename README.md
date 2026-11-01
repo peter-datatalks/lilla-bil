@@ -1,7 +1,7 @@
 # Lilla Bil
 
 A toddler-friendly 2D driving game: the moose from Lilla Piano and Lilla Lingua drives
-north through Sweden in 16 levels, from Skåne to Abisko, collects coins, honks at animals, jumps over
+north through Sweden in 17 levels, from Skåne to Abisko, collects coins, honks at animals, jumps over
 logs and spends coins in a marketplace of vehicles, colours, tyres, extras and horns. Works offline after the first visit. Progress and the
 player's name stay on the device, and nothing is collected.
 
@@ -20,7 +20,7 @@ Open http://localhost:8791. On localhost, `window.lillaBil` exposes the game for
 Pushing to `main` publishes to GitHub Pages. It must be served over **https** for offline mode
 and "Add to Home Screen" to work.
 
-When you release a new version, bump `SHELL` in `sw.js` (e.g. `lb-shell-v3` → `lb-shell-v4`).
+When you release a new version, bump `SHELL` in `sw.js` (e.g. `lb-shell-v4` → `lb-shell-v5`).
 
 ## Credits
 

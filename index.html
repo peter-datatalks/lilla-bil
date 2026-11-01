@@ -127,14 +127,14 @@ svg { display: block; }
 #map { background: linear-gradient(#8fd6f5, #d9f4e6 62%, #8ccf7b); justify-content: center; }
 #mapTop { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); left: var(--gap); right: var(--gap-r);
   display: flex; align-items: center; justify-content: space-between; }
-#stops { display: grid; grid-template-columns: repeat(8, auto); gap: clamp(5px, 1.6vmin, 16px); margin-top: clamp(30px, 8vh, 60px); }
+#stops { display: grid; grid-template-columns: repeat(9, auto); gap: clamp(5px, 1.6vmin, 16px); margin-top: clamp(30px, 8vh, 60px); }
 .spot { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-.placeName { font-size: clamp(12px, 2.1vw, 19px); line-height: 1.1; color: var(--navy); white-space: nowrap; }
+.placeName { font-size: clamp(12px, 1.75vw, 18px); line-height: 1.1; color: var(--navy); white-space: nowrap; }
 #place { position: absolute; left: 0; top: calc(100% + 8px); padding: .05em .7em; border-radius: 12px; background: #1668b5; color: #fff; border: 2px solid #fff;
   font-size: clamp(17px, 4.6vmin, 28px); line-height: 1.3; white-space: nowrap; transform-origin: 0 0; pointer-events: none; box-shadow: 0 .2rem 0 rgba(18,48,107,.3); }
 #place.intro { animation: placeIn 3s both; }
 @keyframes placeIn { 0% { transform: scale(.4); opacity: 0 } 8%, 70% { transform: scale(1.7); opacity: 1 } 100% { transform: scale(1) } }
-.stop { --s: min(10vw, 19vh); overflow: hidden; width: var(--s); height: var(--s); max-width: 100%; border-radius: 50%; position: relative;
+.stop { --s: min(9vw, 19vh); overflow: hidden; width: var(--s); height: var(--s); max-width: 100%; border-radius: 50%; position: relative;
   border: clamp(4px, 1vmin, 7px) solid var(--paper); box-shadow: 0 .4rem 0 rgba(18,48,107,.26); color: #fff;
   font-size: calc(var(--s) * .26); line-height: 1; display: grid; place-items: start center; text-shadow: 0 .06em 0 rgba(18,48,107,.6); }
 .stop canvas { width: 100%; height: 100%; }
@@ -368,28 +368,36 @@ migrateSave();
 save.owned.vehicle = save.owned.vehicle || ['car']; save.owned.horn = save.owned.horn || ['beep'];
 save.equip.vehicle = save.equip.vehicle || 'car'; save.equip.horn = save.equip.horn || 'beep';
 if (save.best[7]) save.unlocked = Math.max(save.unlocked, 8); // the old last level now leads on north
+if (!save.uppsala) { // Uppsala joined the road as level 9, so stops past Stockholm moved up one
+  save.uppsala = true;
+  const moved = {};
+  for (const n in save.best) moved[+n < 8 ? n : +n + 1] = save.best[n];
+  save.best = moved;
+  if (save.unlocked > 8) save.unlocked++;
+}
 persist();
 const skill = id => save.skills[id] || 0;
 const paintOf = id => CATALOG.paint.find(p => p.id === id);
 
 /* ---------- themes: the road north, from Skåne to Abisko, one stretch of Sweden per level ---------- */
 const THEMES = [
-  { name: 'skane', place: 'Skåne', sky: ['#7fd0f4', '#dcf5fb'], far: '#b6dfc7', mid: '#f2d43a', back: '#86c971', ground: '#5fb255', road: '#565c6b', sun: '#ffd84d', critter: 'sheep', landmark: 'windmill', icon: 'windmill', iconS: .78, sprites: ['korsvirke', 'flower', 'sheep', 'flower', 'birch', 'korsvirke', 'sign'] },
-  { name: 'malmo', place: 'Malmö', sky: ['#8ad6f5', '#e6f7fb'], far: '#b9cbdc', mid: '#9fc58e', back: '#c9ccd4', ground: '#a6abb7', road: '#50566a', sun: '#ffd84d', skyline: true, critter: 'dog', landmark: 'torso', icon: 'torso', iconS: .4, sprites: ['block', 'lamp', 'oak', 'block', 'lamp', 'block'] },
-  { name: 'smaland', place: 'Småland', sky: ['#86d4e8', '#e4f7e6'], far: '#8fc3a2', mid: '#5fa577', back: '#5fae62', ground: '#3f8f4c', road: '#50566a', sun: '#ffe07a', critter: 'hedgehog', icon: 'stuga', iconS: .55, sprites: ['pine', 'pine', 'mushroom', 'pine', 'sign', 'pine', 'stuga'] },
-  { name: 'oland', place: 'Öland', sky: ['#6fc6f2', '#d5f1fa'], far: '#a6d6c6', mid: '#4fb3df', back: '#b8d98a', ground: '#8cc26a', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seagull', landmark: 'lighthouse', icon: 'lighthouse', iconS: .55, sprites: ['windmill', 'flower', 'rock', 'reed', 'flower', 'boat'] },
-  { name: 'goteborg', place: 'Göteborg', sky: ['#a9c4d8', '#e3ecf0'], far: '#a3b4c6', mid: '#86a98a', back: '#c1c5cf', ground: '#9da3b0', road: '#4b5166', sun: '#fff0b0', skyline: true, fall: ['#8fc6e6'], critter: 'dog', landmark: 'ferris', icon: 'ferris', iconS: .36, sprites: ['block', 'crane', 'lamp', 'block', 'lamp', 'crane'] },
-  { name: 'bohuslan', place: 'Bohuslän', sky: ['#ff9d7a', '#ffe3a6'], far: '#d890a0', mid: '#e0966f', back: '#b9a38c', ground: '#8f8173', road: '#514f63', sun: '#fff0a8', low: true, lake: true, critter: 'seal', landmark: 'sjobod', icon: 'sjobod', iconS: .62, sprites: ['rock', 'sjobod', 'boat', 'rock', 'lighthouse', 'reed'] },
-  { name: 'autumn', place: 'Värmland', sky: ['#9fd4e8', '#fdf0d0'], far: '#e6c483', mid: '#df9a4e', back: '#d9a94c', ground: '#b98434', road: '#5b5a62', sun: '#ffc75a', fall: ['#e8702a', '#f6c21c', '#c9452f'], critter: 'sheep', icon: 'oak', iconS: .7, sprites: ['oak', 'mushroom', 'oak', 'pine', 'stuga', 'oak', 'sign'] },
-  { name: 'stockholm', place: 'Stockholm', sky: ['#7fcdf2', '#e4f4f6'], far: '#a9bcd2', mid: '#4fa6cf', back: '#d1c8b8', ground: '#a9a59f', road: '#4f5468', sun: '#ffd84d', skyline: true, lake: true, critter: 'dog', landmark: 'stadshus', vehicle: 'tram', icon: 'stadshus', iconS: .42, sprites: ['gamla', 'lamp', 'block', 'gamla', 'oak', 'lamp'] },
-  { name: 'skargard', place: 'Skärgården', sky: ['#62c0f0', '#d8f2fa'], far: '#7fbf9a', mid: '#3aa3d6', back: '#b5b0a6', ground: '#8d8a84', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seal', landmark: 'ferry', icon: 'ferry', iconS: .55, sprites: ['rock', 'pine', 'boat', 'rock', 'stuga', 'reed'] },
-  { name: 'dalarna', place: 'Dalarna', sky: ['#7fd0f4', '#e9f8e0'], far: '#8fc3a2', mid: '#6db26e', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', critter: 'moose', landmark: 'pole', icon: 'dalahorse', iconS: .85, sprites: ['stuga', 'dalahorse', 'birch', 'flower', 'pine', 'sign', 'stuga'] },
-  { name: 'hoga', place: 'Höga Kusten', sky: ['#8cc8ea', '#eaf3ee'], far: '#6f9f8a', mid: '#3f93b8', back: '#5fa577', ground: '#478a58', road: '#50566a', sun: '#ffe07a', lake: true, critter: 'bear', landmark: 'bridge', vehicle: 'tractor', icon: 'bridge', iconS: .4, sprites: ['pine', 'rock', 'pine', 'stuga', 'pine', 'sign'] },
-  { name: 'fell', place: 'Jämtland', sky: ['#62c0f0', '#d8f2fa'], far: '#9aa9c8', mid: '#74c183', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', peaks: true, rainbow: true, critter: 'reindeer', icon: 'sheep', iconS: 1.3, sprites: ['rock', 'flower', 'sheep', 'pine', 'stuga', 'rock', 'sign'] },
-  { name: 'snow', place: 'Västerbotten', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'reindeer', icon: 'snowman', iconS: .9, sprites: ['snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
-  { name: 'kiruna', place: 'Kiruna', sky: ['#c3b6dc', '#fbe4d2'], far: '#8c86a8', mid: '#d4dcea', back: '#eef2f8', ground: '#fbfcff', road: '#666e88', sun: '#ffd9a0', snowy: true, peaks: true, low: true, critter: 'fox', landmark: 'church', vehicle: 'plough', icon: 'church', iconS: .6, sprites: ['snowpine', 'block', 'lamp', 'snowpine', 'stuga', 'block'] },
-  { name: 'icehotel', place: 'Jukkasjärvi', sky: ['#8fd0f0', '#eafaff'], far: '#cfe8f6', mid: '#b4dcf0', back: '#f0f9fd', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'fox', landmark: 'icehotel', icon: 'icehotel', iconS: .6, sprites: ['snowpine', 'snowman', 'lavvu', 'snowpine', 'sign'] },
-  { name: 'abisko', place: 'Abisko', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, peaks: true, critter: 'reindeer', landmark: 'lavvu', icon: 'lavvu', iconS: .7, sprites: ['pine', 'lavvu', 'pine', 'stuga', 'sign', 'pine'] },
+  { name: 'skane', place: 'Skåne', sky: ['#7fd0f4', '#dcf5fb'], far: '#b6dfc7', mid: '#f2d43a', back: '#86c971', ground: '#5fb255', road: '#565c6b', sun: '#ffd84d', critter: 'sheep', icon: 'windmill', iconS: .78, sites: [['stones', 'Ales stenar', 150], ['castle', 'Glimmingehus', 250]], sprites: ['korsvirke', 'flower', 'sheep', 'flower', 'birch', 'korsvirke', 'sign'] },
+  { name: 'malmo', place: 'Malmö', sky: ['#8ad6f5', '#e6f7fb'], far: '#b9cbdc', mid: '#9fc58e', back: '#c9ccd4', ground: '#a6abb7', road: '#50566a', sun: '#ffd84d', skyline: true, critter: 'dog', icon: 'torso', iconS: .4, sites: [['torso', 'Turning Torso', 660], ['bridge', 'Öresundsbron', 290]], sprites: ['block', 'lamp', 'oak', 'block', 'lamp', 'block'] },
+  { name: 'smaland', place: 'Småland', sky: ['#86d4e8', '#e4f7e6'], far: '#8fc3a2', mid: '#5fa577', back: '#5fae62', ground: '#3f8f4c', road: '#50566a', sun: '#ffe07a', critter: 'hedgehog', icon: 'stuga', iconS: .55, sites: [['castle', 'Kalmar slott', 250]], sprites: ['pine', 'pine', 'mushroom', 'pine', 'sign', 'pine', 'stuga'] },
+  { name: 'oland', place: 'Öland', sky: ['#6fc6f2', '#d5f1fa'], far: '#a6d6c6', mid: '#4fb3df', back: '#b8d98a', ground: '#8cc26a', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seagull', icon: 'lighthouse', iconS: .55, sites: [['lighthouse', 'Långe Jan', 340], ['windmill', 'Väderkvarnarna', 290]], sprites: ['windmill', 'flower', 'rock', 'reed', 'flower', 'boat'] },
+  { name: 'goteborg', place: 'Göteborg', sky: ['#a9c4d8', '#e3ecf0'], far: '#a3b4c6', mid: '#86a98a', back: '#c1c5cf', ground: '#9da3b0', road: '#4b5166', sun: '#fff0b0', skyline: true, fall: ['#8fc6e6'], critter: 'dog', icon: 'ferris', iconS: .36, sites: [['ferris', 'Liseberg', 660], ['feske', 'Feskekôrka', 220]], sprites: ['block', 'crane', 'lamp', 'block', 'lamp', 'crane'] },
+  { name: 'bohuslan', place: 'Bohuslän', sky: ['#ff9d7a', '#ffe3a6'], far: '#d890a0', mid: '#e0966f', back: '#b9a38c', ground: '#8f8173', road: '#514f63', sun: '#fff0a8', low: true, lake: true, critter: 'seal', icon: 'sjobod', iconS: .62, sites: [['sjobod', 'Smögenbryggan', 190], ['lighthouse', 'Pater Noster', 340]], sprites: ['rock', 'sjobod', 'boat', 'rock', 'lighthouse', 'reed'] },
+  { name: 'autumn', place: 'Värmland', sky: ['#9fd4e8', '#fdf0d0'], far: '#e6c483', mid: '#df9a4e', back: '#d9a94c', ground: '#b98434', road: '#5b5a62', sun: '#ffc75a', fall: ['#e8702a', '#f6c21c', '#c9452f'], critter: 'sheep', icon: 'oak', iconS: .7, sites: [['manor', 'Mårbacka', 210]], sprites: ['oak', 'mushroom', 'oak', 'pine', 'stuga', 'oak', 'sign'] },
+  { name: 'stockholm', place: 'Stockholm', sky: ['#7fcdf2', '#e4f4f6'], far: '#a9bcd2', mid: '#4fa6cf', back: '#d1c8b8', ground: '#a9a59f', road: '#4f5468', sun: '#ffd84d', skyline: true, lake: true, critter: 'dog', vehicle: 'tram', icon: 'stadshus', iconS: .42, sites: [['gamla', 'Gamla Stan', 220], ['stadshus', 'Stadshuset', 370]], sprites: ['gamla', 'lamp', 'block', 'gamla', 'oak', 'lamp'] },
+  { name: 'uppsala', place: 'Uppsala', sky: ['#86d0f2', '#e6f5f0'], far: '#b9cbdc', mid: '#9fc58e', back: '#a7d08a', ground: '#7dbb68', road: '#4f5468', sun: '#ffd84d', critter: 'dog', vehicle: 'tram', icon: 'domkyrka', iconS: .55, sites: [['domkyrka', 'Domkyrkan', 335], ['castle', 'Uppsala slott', 250]], sprites: ['oak', 'gamla', 'lamp', 'birch', 'oak', 'lamp'] },
+  { name: 'skargard', place: 'Skärgården', sky: ['#62c0f0', '#d8f2fa'], far: '#7fbf9a', mid: '#3aa3d6', back: '#b5b0a6', ground: '#8d8a84', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seal', icon: 'ferry', iconS: .55, sites: [['ferry', 'Vaxholmsbåten', 190], ['castle', 'Vaxholms fästning', 250]], sprites: ['rock', 'pine', 'boat', 'rock', 'stuga', 'reed'] },
+  { name: 'dalarna', place: 'Dalarna', sky: ['#7fd0f4', '#e9f8e0'], far: '#8fc3a2', mid: '#6db26e', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', critter: 'moose', icon: 'dalahorse', iconS: .85, sites: [['pole', 'Midsommarstången', 380], ['dalahorse', 'Dalahästen', 190]], sprites: ['stuga', 'dalahorse', 'birch', 'flower', 'pine', 'sign', 'stuga'] },
+  { name: 'hoga', place: 'Höga Kusten', sky: ['#8cc8ea', '#eaf3ee'], far: '#6f9f8a', mid: '#3f93b8', back: '#5fa577', ground: '#478a58', road: '#50566a', sun: '#ffe07a', lake: true, critter: 'bear', vehicle: 'tractor', icon: 'bridge', iconS: .4, sites: [['bridge', 'Höga Kusten-bron', 290]], sprites: ['pine', 'rock', 'pine', 'stuga', 'pine', 'sign'] },
+  { name: 'fell', place: 'Jämtland', sky: ['#62c0f0', '#d8f2fa'], far: '#9aa9c8', mid: '#74c183', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', peaks: true, rainbow: true, critter: 'reindeer', icon: 'sheep', iconS: 1.3, sites: [['monster', 'Storsjöodjuret', 210]], sprites: ['rock', 'flower', 'sheep', 'pine', 'stuga', 'rock', 'sign'] },
+  { name: 'snow', place: 'Västerbotten', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'reindeer', icon: 'snowman', iconS: .9, sites: [['stuga', 'Bonnstan', 190]], sprites: ['snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
+  { name: 'kiruna', place: 'Kiruna', sky: ['#c3b6dc', '#fbe4d2'], far: '#8c86a8', mid: '#d4dcea', back: '#eef2f8', ground: '#fbfcff', road: '#666e88', sun: '#ffd9a0', snowy: true, peaks: true, low: true, critter: 'fox', vehicle: 'plough', icon: 'church', iconS: .6, sites: [['church', 'Kiruna kyrka', 330]], sprites: ['snowpine', 'block', 'lamp', 'snowpine', 'stuga', 'block'] },
+  { name: 'icehotel', place: 'Jukkasjärvi', sky: ['#8fd0f0', '#eafaff'], far: '#cfe8f6', mid: '#b4dcf0', back: '#f0f9fd', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'fox', icon: 'icehotel', iconS: .6, sites: [['icehotel', 'Icehotel', 210]], sprites: ['snowpine', 'snowman', 'lavvu', 'snowpine', 'sign'] },
+  { name: 'abisko', place: 'Abisko', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, peaks: true, critter: 'reindeer', icon: 'lavvu', iconS: .7, sites: [['lapporten', 'Lapporten', 330]], sprites: ['pine', 'lavvu', 'pine', 'stuga', 'sign', 'pine'] },
 ];
 
 /* ---------- levels ----------
@@ -406,6 +414,7 @@ const SPECS = [
   { forks: 4, obs: ['critter', 'rock', 'roller'], coinLog: true },
   { forks: 5, obs: ['slow', 'hump', 'ball'], coinLog: true },
   { forks: 4, obs: ['critter', 'log', 'puddle', 'ball', 'ramp'], coinLog: true },
+  { forks: 4, obs: ['critter', 'cones', 'puddle', 'hump'], coinLog: true },
   { forks: 5, obs: ['critter', 'rock', 'ramp', 'roller'], coinLog: true },
   { forks: 5, obs: ['slow', 'hump', 'roller'], coinLog: true },
   { forks: 5, obs: ['critter', 'rock', 'puddle', 'ball'], coinLog: true },
@@ -457,14 +466,16 @@ function buildLevel(n) {
   const scenery = [];
   const t = THEMES[n];
   for (let sx = 200; sx < finish + 1400; sx += 240 + rand() * 320) scenery.push({ x: sx, kind: t.sprites[Math.floor(rand() * t.sprites.length)], flip: rand() < .5 });
-  if (t.landmark) for (const lx of forks.length ? forks.map(f => f.a - 1100) : [1500, 4000, 6500]) {
-    for (let i = scenery.length - 1; i >= 0; i--) if (Math.abs(scenery[i].x - lx) < 260) scenery.splice(i, 1);
-    scenery.push({ x: lx, kind: t.landmark, flip: false });
-  }
+  const spots = forks.length ? [...forks.map(f => f.a - 1100), finish - 900] : [1500, 4000, 6500];
+  spots.forEach((lx, i) => { // the sights of the place take turns along the road, each with its name up
+    const [kind, name, tall] = t.sites[i % t.sites.length];
+    for (let j = scenery.length - 1; j >= 0; j--) if (Math.abs(scenery[j].x - lx) < 400) scenery.splice(j, 1);
+    scenery.push({ x: lx, kind, flip: false, name, tall, h: tall < 340 ? 1.4 : 1 });
+  });
   const clouds = Array.from({ length: 9 }, () => ({ x: rand() * 2600, y: 40 + rand() * 170, s: .6 + rand() * .8 }));
   let maxCoins = items.filter(i => i.kind === 'coin' && i.lane === 0).length;
   for (const f of forks) maxCoins += Math.max(...[-1, 1].map(l => items.filter(i => i.kind === 'coin' && i.lane === l && i.x > f.a && i.x < f.b).length));
-  return { n, theme: t, items, forks, obs, critter: t.critter, finish, scenery, clouds, maxCoins, ph: n * 1.7, seen: 0 };
+  return { n, theme: t, items, forks, obs, critter: t.critter, finish, scenery, sights: scenery.filter(s => s.name), clouds, maxCoins, ph: n * 1.7, seen: 0 };
 }
 
 const baseY = (L, x) => 436 + 32 * Math.sin(x * .0011 + L.ph) + 16 * Math.sin(x * .0027 + L.ph * 2);
@@ -650,6 +661,7 @@ function confetti() {
 
 function update(dt) {
   S.t += dt; S.honkT = Math.max(0, S.honkT - dt); S.blink -= dt;
+  if (S.screen === 'play') for (const s of S.L.sights) if (!s.met && s.x - S.x < 420) { s.met = true; beep(784, 0, .14, .09); beep(1175, .13, .26, .09); }
   if (S.blink < -.14) S.blink = 2 + Math.random() * 3.5;
   const L = S.L;
   for (const p of S.parts) { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; }
@@ -938,6 +950,45 @@ const SPRITE = {
     rect(c, 56, -270, 62, 270, '#b5583f'); rect(c, 66, -256, 42, 26, '#7a3a2a'); poly([[50, -270], [87, -306], [124, -270]], '#3f9a84');
     rect(c, 84, -326, 6, 24, '#d9a514');
     g.fillStyle = '#f6c21c'; [[-13, -336], [13, -336], [0, -352]].forEach(([x, y]) => { g.beginPath(); g.arc(87 + x, y, 8, 0, 7); g.fill(); });
+  },
+  stones(c) { // Ales stenar, the stone ship on the cliff at Kåseberga
+    [[-150, 62], [-104, 92], [-58, 112], [-10, 124], [38, 118], [86, 96], [132, 66]].forEach(([x, h]) => { g.fillStyle = '#8f96a3'; g.beginPath(); g.roundRect(x - 15, -h, 30, h, [13, 13, 2, 2]); g.fill(); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x - 9, -h + 10, 6, h - 22); });
+  },
+  castle(c) { // Kalmar slott and its likes: round towers with green caps
+    rect(c, -120, -130, 240, 130, '#d9cdb4'); for (let x = -112; x < 112; x += 34) rect(c, x, -146, 20, 18, '#d9cdb4');
+    for (const x of [-126, 126]) { rect(c, x - 34, -182, 68, 182, '#cbbd9f'); poly([[x - 42, -182], [x, -246], [x + 42, -182]], '#3f9a84'); rect(c, x - 9, -140, 18, 30, '#7a5a3a'); }
+    panel(-30, -82, 60, 82, [30, 30, 0, 0], '#7a5a3a'); for (const x of [-72, 72]) rect(c, x - 10, -110, 20, 30, '#7fb0c8');
+  },
+  feske(c) { // Feskekôrka, the fish hall that looks like a church
+    poly([[-140, -44], [0, -214], [140, -44]], '#c9604a'); rect(c, -112, -44, 224, 44, '#f1e4c8');
+    for (let i = -4; i <= 4; i++) rect(c, i * 40 - 10, -70, 20, 2 + 26, 'rgba(255,255,255,.1)');
+    for (const x of [-52, 0, 52]) panel(x - 15, -38, 30, 38, [15, 15, 0, 0], '#7fb0c8');
+    rect(c, -7, -130, 14, 40, '#fff5d6');
+  },
+  domkyrka(c) { // Uppsala cathedral: red brick and two tall spires
+    rect(c, -148, -150, 170, 150, '#b5583f'); poly([[-156, -150], [-64, -206], [28, -150]], '#3b4a5e');
+    for (let x = -134; x < 10; x += 40) panel(x, -118, 22, 66, [11, 11, 0, 0], '#7fb0c8');
+    for (const x of [62, 138]) { rect(c, x - 32, -180, 64, 180, '#b5583f'); poly([[x - 36, -180], [x, -315], [x + 36, -180]], '#3b4a5e'); panel(x - 12, -162, 24, 44, [12, 12, 0, 0], '#7fb0c8'); rect(c, x - 2, -330, 4, 20, '#d9a514'); }
+    rect(c, 94, -180, 12, 180, '#a44d36'); panel(84, -84, 32, 84, [16, 16, 0, 0], '#7a3a2a');
+    g.fillStyle = '#fff5d6'; g.beginPath(); g.arc(100, -104, 18, 0, 7); g.fill();
+  },
+  manor(c) { // Mårbacka, a Värmland manor
+    rect(c, -140, -130, 280, 130, '#f1dc9a'); poly([[-154, -130], [-110, -196], [110, -196], [154, -130]], '#6a5a58');
+    for (const x of [-116, -66, 46, 96]) { rect(c, x, -104, 26, 44, '#7fb0c8'); rect(c, x + 12, -104, 2, 44, '#fff'); }
+    rect(c, -32, -160, 64, 160, '#fff5d6'); poly([[-42, -150], [0, -190], [42, -150]], '#fff5d6'); panel(-14, -60, 28, 60, [14, 14, 0, 0], '#7a5a3a');
+  },
+  monster(c) { // Storsjöodjuret from the lake at Östersund
+    const G = '#3fa36a';
+    for (const [x, r] of [[-104, 34], [-30, 44]]) { g.fillStyle = G; g.beginPath(); g.arc(x, -6, r, Math.PI, 0); g.fill(); }
+    g.strokeStyle = G; g.lineWidth = 34; g.lineCap = 'round'; g.beginPath(); g.moveTo(54, -6); g.quadraticCurveTo(50, -120, 96, -142); g.stroke();
+    g.fillStyle = G; g.beginPath(); g.ellipse(112, -152, 38, 27, .08, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(108, -164, 10, 0, 7); g.fill(); g.fillStyle = NAVY; g.beginPath(); g.arc(111, -164, 5, 0, 7); g.fill();
+    g.strokeStyle = '#1f6b43'; g.lineWidth = 3.5; g.beginPath(); g.arc(122, -148, 14, .2, 1.7); g.stroke();
+  },
+  lapporten(c) { // the U-shaped mountain gate, seen from Abisko
+    g.fillStyle = '#54608a'; g.beginPath(); g.moveTo(-290, 0); g.lineTo(-210, -250); g.quadraticCurveTo(-140, -310, -92, -220); g.quadraticCurveTo(-60, -40, 0, -36); g.quadraticCurveTo(60, -40, 92, -220); g.quadraticCurveTo(140, -310, 210, -250); g.lineTo(290, 0); g.fill();
+    g.fillStyle = '#eef2f8'; g.beginPath(); g.moveTo(-210, -250); g.quadraticCurveTo(-140, -310, -92, -220); g.lineTo(-120, -206); g.lineTo(-150, -226); g.lineTo(-186, -200); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(210, -250); g.quadraticCurveTo(140, -310, 92, -220); g.lineTo(120, -206); g.lineTo(150, -226); g.lineTo(186, -200); g.closePath(); g.fill();
   },
   gamla(c) { // gabled houses of Gamla stan
     [[-84, '#d98a4a'], [-28, '#e3c26a'], [28, '#c9604a'], [84, '#e0a878']].forEach(([x, col], i) => {
@@ -1434,6 +1485,18 @@ function drawPart(p, a) {
   if (p.shape === 'bubbles') { g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2; g.stroke(); }
 }
 
+function sightName(L, s, camY) { // a name board over each sight, growing and turning gold as the car comes by
+  const near = smooth(1 - Math.abs(s.x - S.x) / 640), k = 1 + near * .3;
+  const y = Math.max(roadY(L, s.x, -1) - s.tall * (s.h || 1) - 34, camY + 92 / sc + 24 * k);
+  g.save(); g.translate(s.x, y); g.scale(k, k);
+  g.font = '700 30px "Baloo 2", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const w = g.measureText(s.name).width + 36;
+  panel(-w / 2 - 3, -24, w + 6, 48, 16, '#fff');
+  panel(-w / 2, -21, w, 42, 13, near > .4 ? '#f6c21c' : '#1668b5');
+  g.fillStyle = near > .4 ? NAVY : '#fff'; g.fillText(s.name, 0, 2);
+  g.restore();
+}
+
 function draw() {
   const L = S.L, T = L.theme, car = roadY(L, S.x, S.lane);
   const ahead = clamp(vw * .32, 230, 460);
@@ -1454,8 +1517,10 @@ function draw() {
     g.save(); g.translate(s.x, roadY(L, s.x, -1) + 4);
     const c = { leaf: s.x % 3 < 1.5 ? leaf : '#d9a02c', seed: s.x };
     if (s.flip) g.scale(-1, 1);
+    if (s.h) g.scale(s.h, s.h);
     SPRITE[s.kind](c); g.restore();
   }
+  for (const s of L.sights) if (s.x > camX - 360 && s.x < camX + vw + 360) sightName(L, s, camY);
   for (const f of L.forks) drawRoad(L, T, camX, -1, f.a, f.b);
   strip(L, camX, 1, bottom); g.fillStyle = T.ground; g.fill();
   drawRoad(L, T, camX, 1, camX - 40, camX + vw + 40);
