@@ -74,7 +74,7 @@ svg { display: block; }
 #coins.bump { animation: bump .18s; }
 @keyframes bump { 50% { transform: scale(1.16) } }
 
-@media (max-width: 520px) { #trip { display: none } #hud { justify-content: space-between } }
+@media (max-width: 520px) { #trip, #fullH { display: none } #hud { justify-content: space-between } }
 
 /* pedals */
 #gas { position: absolute; right: var(--gap-r); bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 10px));
@@ -115,17 +115,28 @@ svg { display: block; }
 .play svg { width: 54%; height: 54%; margin-left: 7%; }
 #titlePlay { animation: nudge 1.3s infinite; }
 
+.corner { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); left: var(--gap); right: var(--gap-r); display: flex; justify-content: space-between; pointer-events: none; }
+.corner > * { pointer-events: auto; }
+#hello { position: absolute; left: var(--gap); top: var(--hello-y, 30%); transform: translateY(-100%); max-width: 44vw; padding: .1em .7em; border-radius: 26px 26px 26px 6px;
+  background: var(--paper); font-size: clamp(20px, 6vmin, 38px); line-height: 1.3; overflow-wrap: anywhere; box-shadow: 0 .3rem 0 rgba(18,48,107,.22); animation: pop .4s cubic-bezier(.3,1.6,.6,1) both; }
+#whoForm { font-size: clamp(22px, 6vmin, 34px); }
+#whoMoose { width: clamp(70px, 20vmin, 120px); height: auto; }
+#whoName { font: inherit; color: inherit; text-align: center; width: min(70vw, 9em); padding: .1em .4em; border: 4px solid var(--sun); border-radius: 20px; background: #fff;
+  outline: 0; touch-action: auto; user-select: text; -webkit-user-select: text; }
 #map { background: linear-gradient(#8fd6f5, #d9f4e6 62%, #8ccf7b); justify-content: center; }
 #mapTop { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); left: var(--gap); right: var(--gap-r);
   display: flex; align-items: center; justify-content: space-between; }
-#stops { display: grid; grid-template-columns: repeat(4, auto); gap: clamp(8px, 2.6vmin, 24px); }
-.stop { --s: min(19vw, 25vh); width: var(--s); height: var(--s); max-width: 100%; border-radius: 50%; position: relative;
+#stops { display: grid; grid-template-columns: repeat(8, auto); gap: clamp(5px, 1.6vmin, 16px); margin-top: clamp(30px, 8vh, 60px); }
+.stop { --s: min(11vw, 23vh); overflow: hidden; width: var(--s); height: var(--s); max-width: 100%; border-radius: 50%; position: relative;
   border: clamp(4px, 1vmin, 7px) solid var(--paper); box-shadow: 0 .4rem 0 rgba(18,48,107,.26); color: #fff;
-  font-size: calc(var(--s) * .44); line-height: 1; display: grid; place-items: center; text-shadow: 0 .06em 0 rgba(18,48,107,.5); }
+  font-size: calc(var(--s) * .26); line-height: 1; display: grid; place-items: start center; text-shadow: 0 .06em 0 rgba(18,48,107,.6); }
+.stop canvas { width: 100%; height: 100%; }
+.stop .num { position: relative; margin-top: 3%; padding: 0 .36em; border-radius: 99px; background: var(--navy); text-shadow: none; }
 .stop[disabled] { filter: grayscale(.75) brightness(.92); cursor: default; }
 .stop .stars { position: absolute; left: 0; right: 0; bottom: -2%; display: flex; justify-content: center; gap: 1px; }
 .stop .stars svg { width: 26%; height: auto; }
 .stop.here { animation: nudge 1.1s infinite; }
+@media (max-aspect-ratio: 1/1) { #stops { grid-template-columns: repeat(4, auto); } .stop { --s: min(21vw, 13vh); } }
 #shopBtn { display: flex; align-items: center; gap: .4em; margin-top: clamp(4px, 1.5vmin, 12px); padding: .25em .9em .25em .5em;
   border-radius: 999px; background: var(--coral); box-shadow: 0 .4rem 0 #b83f2f; }
 #shopBtn svg { width: clamp(44px, 12vmin, 70px); height: clamp(44px, 12vmin, 70px); }
@@ -203,6 +214,7 @@ svg { display: block; }
     <div id="trip"><div id="tripDot"></div><svg id="tripEnd" viewBox="0 0 24 24"><path fill="#12306b" d="M5 2h2.500v20H5z"/><path fill="#f4614d" d="M7.500 3H21l-3.500 4.500L21 12H7.500z"/></svg></div>
     <div id="coins"><svg viewBox="0 0 48 48" data-coin></svg><span id="coinN">0</span></div>
     <button class="toy small" id="mute" aria-label="Sound on or off"></button>
+    <button class="toy small full" id="fullH"></button>
   </div>
 
   <button id="gas" aria-label="Gas pedal, hold to drive" hidden><svg viewBox="0 0 100 100"><rect x="14" y="10" width="72" height="80" rx="16" fill="#fff" opacity=".94"/><g fill="#2fb36a"><rect x="26" y="24" width="48" height="9" rx="4.500"/><rect x="26" y="45" width="48" height="9" rx="4.500"/><rect x="26" y="66" width="48" height="9" rx="4.500"/></g></svg></button>
@@ -211,6 +223,12 @@ svg { display: block; }
   <button class="fork" id="down" aria-label="Take the bottom road" hidden></button>
 
   <section id="title" class="screen">
+    <div class="corner">
+      <button class="toy small" id="whoBtn" aria-label="Who is playing?"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.500" fill="#12306b"/><path fill="#12306b" d="M3.500 21c.6-5 4-7.500 8.500-7.500s7.900 2.500 8.500 7.500z"/></svg></button>
+      <span></span>
+      <button class="toy small full" id="fullT"></button>
+    </div>
+    <button id="hello" hidden></button>
     <div id="logo" role="img" aria-label="Lilla Bil"><span style="color:#f4614d">L</span><span style="color:#e6ae0a">i</span><span style="color:#22b3a6">l</span><span style="color:#1fa89a">l</span><span style="color:#f2577d">a</span> <span style="color:#12306b">Bil</span></div>
     <button class="toy play" id="titlePlay" aria-label="Play"><svg viewBox="0 0 24 24"><path fill="#fff" d="M6 3.800c0-1.200 1.300-2 2.400-1.300l13 8.200c1 .6 1 2 0 2.600l-13 8.200C7.300 22.200 6 21.400 6 20.200z"/></svg></button>
   </section>
@@ -218,7 +236,7 @@ svg { display: block; }
   <section id="map" class="screen" hidden>
     <div id="mapTop">
       <div id="coinsMap" style="display:flex;align-items:center;gap:6px;font-size:clamp(24px,6vmin,34px);background:var(--paper);border-radius:99px;padding:2px 16px 2px 6px"><svg viewBox="0 0 48 48" data-coin style="width:38px;height:38px"></svg><span id="totalN">0</span></div>
-      <button class="toy small" id="mute2" aria-label="Sound on or off"></button>
+      <div class="row" style="gap:10px"><button class="toy small" id="mute2" aria-label="Sound on or off"></button><button class="toy small full" id="fullM"></button></div>
     </div>
     <div id="stops"></div>
     <button class="toy" id="shopBtn" aria-label="Market"><svg viewBox="0 0 48 48"><path fill="#fffaf0" d="M7 21h34v21H7z"/><path fill="#12306b" d="M11 26h11v16H11z"/><path fill="#1d9bf0" d="M27 26h10v9H27z"/><path fill="#fffaf0" d="M4 19 9 6h30l5 13a6.700 6.700 0 0 1-13 0 6.700 6.700 0 0 1-14 0 6.700 6.700 0 0 1-13 0z"/><path fill="#f6c21c" d="M17 19 19 6h10l2 13a7 7 0 0 1-14 0z"/></svg><svg viewBox="0 0 48 48" data-coin></svg></button>
@@ -231,6 +249,18 @@ svg { display: block; }
     </div>
     <div id="stage"><canvas id="shopCar" aria-label="Your car"></canvas><div id="buy"></div></div>
     <div id="counter"><div id="tabs"></div><div id="wares"></div></div>
+  </section>
+
+  <section id="who" class="screen dim" hidden>
+    <form class="card" id="whoForm" autocomplete="off">
+      <img id="whoMoose" alt="">
+      <label id="whoLabel" for="whoName"></label>
+      <input id="whoName" maxlength="20" enterkeyhint="done" autocapitalize="words" spellcheck="false">
+      <div class="row">
+        <button class="toy small cream" id="whoSkip" type="button" aria-label="Not now"><svg viewBox="0 0 24 24"><path stroke="#12306b" stroke-width="3.400" stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg></button>
+        <button class="toy next" id="whoOk" aria-label="Done"><svg viewBox="0 0 24 24"><path d="m5 13 5 5 9-11" fill="none" stroke="#fff" stroke-width="3.600" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </form>
   </section>
 
   <section id="win" class="screen dim" hidden>
@@ -275,12 +305,12 @@ const ICON_HORN = `<svg viewBox="0 0 100 100"><path d="M12 42h20L78 16v68L32 58H
 const SOUND = on => `<svg viewBox="0 0 24 24"><path fill="#12306b" d="M3 9.500v5h4l5 4.500v-14L7 9.500z"/>${on ? '<path fill="none" stroke="#12306b" stroke-width="2.400" stroke-linecap="round" d="M15.500 8.500a5 5 0 0 1 0 7M18 6a8.500 8.500 0 0 1 0 12"/>' : '<path stroke="#f4614d" stroke-width="2.600" stroke-linecap="round" d="m15.500 9 6 6m0-6-6 6"/>'}</svg>`;
 document.querySelectorAll('[data-coin]').forEach(s => s.innerHTML = COIN_SVG);
 document.querySelectorAll('[data-can]').forEach(s => s.innerHTML = CAN_SVG(s.dataset.can === 'empty' ? '#b9b2a2' : '#f4614d'));
-$('lostMoose').src = MOOSE_SRC;
+$('lostMoose').src = $('whoMoose').src = MOOSE_SRC;
 $('tripDot').style.backgroundImage = `url(${MOOSE_SRC})`;
 
 /* ---------- save data ---------- */
 const SAVE_KEY = 'lilla-bil-v1';
-let save = { unlocked: 0, best: {}, total: 0, paint: 0, muted: false };
+let save = { unlocked: 0, best: {}, total: 0, paint: 0, muted: false, name: '', askedName: false };
 try { save = { ...save, ...JSON.parse(localStorage.getItem(SAVE_KEY) || '{}') }; } catch {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
 
@@ -312,20 +342,30 @@ function migrateSave() {
   save.equip = { paint: (CATALOG.paint[save.paint] || CATALOG.paint[0]).id, tyre: 'plain', hat: null, back: null, trail: null };
   save.skills = {};
 }
-migrateSave(); persist();
+migrateSave();
+if (save.best[7]) save.unlocked = Math.max(save.unlocked, 8); // the old last level now leads on north
+persist();
 const skill = id => save.skills[id] || 0;
 const paintOf = id => CATALOG.paint.find(p => p.id === id);
 
-/* ---------- themes: one stretch of Sweden per level ---------- */
+/* ---------- themes: the road north, from Skåne to Abisko, one stretch of Sweden per level ---------- */
 const THEMES = [
-  { name: 'meadow', sky: ['#7fd0f4', '#dcf5fb'], far: '#b6dfc7', mid: '#93cf8d', back: '#86c971', ground: '#5fb255', road: '#565c6b', sun: '#ffd84d', sprites: ['birch', 'flower', 'sheep', 'flower', 'stuga', 'birch', 'sign'] },
-  { name: 'forest', sky: ['#86d4e8', '#e4f7e6'], far: '#8fc3a2', mid: '#5fa577', back: '#5fae62', ground: '#3f8f4c', road: '#50566a', sun: '#ffe07a', sprites: ['pine', 'pine', 'mushroom', 'pine', 'sign', 'pine', 'stuga'] },
-  { name: 'lake', sky: ['#6fc6f2', '#d5f1fa'], far: '#a6d6c6', mid: '#4fb3df', back: '#8ed07c', ground: '#6abb5e', road: '#565c6b', sun: '#ffd84d', lake: true, sprites: ['reed', 'birch', 'boat', 'flower', 'stuga', 'reed', 'sign'] },
-  { name: 'autumn', sky: ['#9fd4e8', '#fdf0d0'], far: '#e6c483', mid: '#df9a4e', back: '#d9a94c', ground: '#b98434', road: '#5b5a62', sun: '#ffc75a', fall: ['#e8702a', '#f6c21c', '#c9452f'], sprites: ['oak', 'mushroom', 'oak', 'pine', 'stuga', 'oak', 'sign'] },
-  { name: 'sunset', sky: ['#ff9d7a', '#ffe3a6'], far: '#d890a0', mid: '#a56f9e', back: '#8d9f60', ground: '#6e8a4c', road: '#514f63', sun: '#fff0a8', low: true, sprites: ['birch', 'stuga', 'pine', 'sheep', 'flower', 'sign'] },
-  { name: 'snow', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], sprites: ['snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
-  { name: 'aurora', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, sprites: ['pine', 'stuga', 'pine', 'sign', 'pine'] },
-  { name: 'fell', sky: ['#62c0f0', '#d8f2fa'], far: '#9aa9c8', mid: '#74c183', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', peaks: true, rainbow: true, sprites: ['rock', 'flower', 'sheep', 'pine', 'stuga', 'rock', 'sign'] },
+  { name: 'skane', sky: ['#7fd0f4', '#dcf5fb'], far: '#b6dfc7', mid: '#f2d43a', back: '#86c971', ground: '#5fb255', road: '#565c6b', sun: '#ffd84d', critter: 'sheep', landmark: 'windmill', icon: 'windmill', iconS: .78, sprites: ['korsvirke', 'flower', 'sheep', 'flower', 'birch', 'korsvirke', 'sign'] },
+  { name: 'malmo', sky: ['#8ad6f5', '#e6f7fb'], far: '#b9cbdc', mid: '#9fc58e', back: '#c9ccd4', ground: '#a6abb7', road: '#50566a', sun: '#ffd84d', skyline: true, critter: 'dog', landmark: 'torso', icon: 'torso', iconS: .4, sprites: ['block', 'lamp', 'oak', 'block', 'lamp', 'block'] },
+  { name: 'smaland', sky: ['#86d4e8', '#e4f7e6'], far: '#8fc3a2', mid: '#5fa577', back: '#5fae62', ground: '#3f8f4c', road: '#50566a', sun: '#ffe07a', critter: 'hedgehog', icon: 'stuga', iconS: .55, sprites: ['pine', 'pine', 'mushroom', 'pine', 'sign', 'pine', 'stuga'] },
+  { name: 'oland', sky: ['#6fc6f2', '#d5f1fa'], far: '#a6d6c6', mid: '#4fb3df', back: '#b8d98a', ground: '#8cc26a', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seagull', landmark: 'lighthouse', icon: 'lighthouse', iconS: .55, sprites: ['windmill', 'flower', 'rock', 'reed', 'flower', 'boat'] },
+  { name: 'goteborg', sky: ['#a9c4d8', '#e3ecf0'], far: '#a3b4c6', mid: '#86a98a', back: '#c1c5cf', ground: '#9da3b0', road: '#4b5166', sun: '#fff0b0', skyline: true, fall: ['#8fc6e6'], critter: 'dog', landmark: 'ferris', icon: 'ferris', iconS: .36, sprites: ['block', 'crane', 'lamp', 'block', 'lamp', 'crane'] },
+  { name: 'bohuslan', sky: ['#ff9d7a', '#ffe3a6'], far: '#d890a0', mid: '#e0966f', back: '#b9a38c', ground: '#8f8173', road: '#514f63', sun: '#fff0a8', low: true, lake: true, critter: 'seal', landmark: 'sjobod', icon: 'sjobod', iconS: .62, sprites: ['rock', 'sjobod', 'boat', 'rock', 'lighthouse', 'reed'] },
+  { name: 'autumn', sky: ['#9fd4e8', '#fdf0d0'], far: '#e6c483', mid: '#df9a4e', back: '#d9a94c', ground: '#b98434', road: '#5b5a62', sun: '#ffc75a', fall: ['#e8702a', '#f6c21c', '#c9452f'], critter: 'sheep', icon: 'oak', iconS: .7, sprites: ['oak', 'mushroom', 'oak', 'pine', 'stuga', 'oak', 'sign'] },
+  { name: 'stockholm', sky: ['#7fcdf2', '#e4f4f6'], far: '#a9bcd2', mid: '#4fa6cf', back: '#d1c8b8', ground: '#a9a59f', road: '#4f5468', sun: '#ffd84d', skyline: true, lake: true, critter: 'dog', landmark: 'stadshus', vehicle: 'tram', icon: 'stadshus', iconS: .42, sprites: ['gamla', 'lamp', 'block', 'gamla', 'oak', 'lamp'] },
+  { name: 'skargard', sky: ['#62c0f0', '#d8f2fa'], far: '#7fbf9a', mid: '#3aa3d6', back: '#b5b0a6', ground: '#8d8a84', road: '#565c6b', sun: '#ffd84d', lake: true, critter: 'seal', landmark: 'ferry', icon: 'ferry', iconS: .55, sprites: ['rock', 'pine', 'boat', 'rock', 'stuga', 'reed'] },
+  { name: 'dalarna', sky: ['#7fd0f4', '#e9f8e0'], far: '#8fc3a2', mid: '#6db26e', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', critter: 'moose', landmark: 'pole', icon: 'dalahorse', iconS: .85, sprites: ['stuga', 'dalahorse', 'birch', 'flower', 'pine', 'sign', 'stuga'] },
+  { name: 'hoga', sky: ['#8cc8ea', '#eaf3ee'], far: '#6f9f8a', mid: '#3f93b8', back: '#5fa577', ground: '#478a58', road: '#50566a', sun: '#ffe07a', lake: true, critter: 'bear', landmark: 'bridge', vehicle: 'tractor', icon: 'bridge', iconS: .4, sprites: ['pine', 'rock', 'pine', 'stuga', 'pine', 'sign'] },
+  { name: 'fell', sky: ['#62c0f0', '#d8f2fa'], far: '#9aa9c8', mid: '#74c183', back: '#79c76b', ground: '#57ad56', road: '#565c6b', sun: '#ffd84d', peaks: true, rainbow: true, critter: 'reindeer', icon: 'sheep', iconS: 1.3, sprites: ['rock', 'flower', 'sheep', 'pine', 'stuga', 'rock', 'sign'] },
+  { name: 'snow', sky: ['#a9d9f2', '#eef8fc'], far: '#d6e8f4', mid: '#c0dcee', back: '#f2f8fc', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'reindeer', icon: 'snowman', iconS: .9, sprites: ['snowpine', 'snowman', 'snowpine', 'stuga', 'snowpine', 'sign'] },
+  { name: 'kiruna', sky: ['#c3b6dc', '#fbe4d2'], far: '#8c86a8', mid: '#d4dcea', back: '#eef2f8', ground: '#fbfcff', road: '#666e88', sun: '#ffd9a0', snowy: true, peaks: true, low: true, critter: 'fox', landmark: 'church', vehicle: 'plough', icon: 'church', iconS: .6, sprites: ['snowpine', 'block', 'lamp', 'snowpine', 'stuga', 'block'] },
+  { name: 'icehotel', sky: ['#8fd0f0', '#eafaff'], far: '#cfe8f6', mid: '#b4dcf0', back: '#f0f9fd', ground: '#ffffff', road: '#6d7790', sun: '#fff6c9', snowy: true, fall: ['#ffffff'], critter: 'fox', landmark: 'icehotel', icon: 'icehotel', iconS: .6, sprites: ['snowpine', 'snowman', 'lavvu', 'snowpine', 'sign'] },
+  { name: 'abisko', sky: ['#0d1b4c', '#2b4a86'], far: '#1e3468', mid: '#1a4a64', back: '#2a6d68', ground: '#1f5650', road: '#3a4058', sun: '#fdf3c4', night: true, snowy: false, peaks: true, critter: 'reindeer', landmark: 'lavvu', icon: 'lavvu', iconS: .7, sprites: ['pine', 'lavvu', 'pine', 'stuga', 'sign', 'pine'] },
 ];
 
 /* ---------- levels ----------
@@ -334,26 +374,37 @@ const THEMES = [
 const TANK = 8600, STRETCH = 2200, FORK_LEN = 1900, RAMP = 420, TOP_RISE = 175, LOW_DROP = 120;
 const SPECS = [
   { forks: 0, long: 7600 },
-  { forks: 1, bothFuel: true, mainFuel: 1 },
+  { forks: 1, bothFuel: true, mainFuel: 1, obs: ['hump'] },
   { forks: 2, mainFuel: 1, obs: ['critter'] },
   { forks: 3, mainFuel: 1, obs: ['critter', 'log'] },
-  { forks: 3, obs: ['critter', 'log', 'puddle'] },
-  { forks: 4, obs: ['log', 'puddle', 'roller'], coinLog: true },
+  { forks: 3, obs: ['critter', 'cones', 'puddle', 'hump'] },
+  { forks: 4, obs: ['log', 'puddle', 'ball', 'ramp'], coinLog: true },
   { forks: 4, obs: ['critter', 'rock', 'roller'], coinLog: true },
-  { forks: 5, obs: ['critter', 'log', 'puddle', 'roller'], coinLog: true },
+  { forks: 5, obs: ['slow', 'hump', 'ball'], coinLog: true },
+  { forks: 4, obs: ['critter', 'log', 'puddle', 'ball', 'ramp'], coinLog: true },
+  { forks: 5, obs: ['critter', 'rock', 'ramp', 'roller'], coinLog: true },
+  { forks: 5, obs: ['slow', 'hump', 'roller'], coinLog: true },
+  { forks: 5, obs: ['critter', 'rock', 'puddle', 'ball'], coinLog: true },
+  { forks: 5, obs: ['critter', 'log', 'ice', 'roller'], coinLog: true },
+  { forks: 5, obs: ['slow', 'hump', 'ball'], coinLog: true },
+  { forks: 5, obs: ['critter', 'rock', 'ice', 'ramp', 'roller'], coinLog: true },
+  { forks: 5, obs: ['critter', 'log', 'ice', 'ramp', 'ball'], coinLog: true },
 ];
 /* Hits never stop a run: a bump spills a little gas and a few coins, then the road is clear again.
-   h is how high the car must be to clear it, w its width on the road. */
-const OBST = { critter: { at: 700, h: 999, w: 90 }, log: { at: 1060, h: 50, w: 110 }, rock: { at: 1060, h: 70, w: 90 },
-  puddle: { at: 1740, h: 18, w: 150 }, roller: { at: 2000, h: 70, w: 76 } };
-const CRITTERS = ['sheep', 'hedgehog', 'duck', 'hedgehog', 'sheep', 'reindeer', 'hedgehog', 'reindeer'];
+   h is how high the car must be to clear it, w its width on the road. Soft ones never hurt: they are
+   fun things to drive over, and a car that jumps them anyway earns the coin. A slow vehicle leaves
+   the road by itself, so no other obstacle may share a stretch between its start and end. */
+const OBST = { critter: { at: 700, h: 999, w: 90 }, slow: { at: 700, h: 999, w: 200, run: 1100 }, hump: { at: 420, h: 1, w: 90, soft: true },
+  log: { at: 1060, h: 50, w: 110 }, rock: { at: 1060, h: 70, w: 90 }, cones: { at: 1060, h: 50, w: 120 },
+  ramp: { at: 1460, h: 40, w: 110, soft: true }, puddle: { at: 1740, h: 18, w: 150, soft: true }, ice: { at: 1740, h: 18, w: 190, soft: true },
+  roller: { at: 2000, h: 70, w: 76 }, ball: { at: 2000, h: 70, w: 76 } };
 const JUMP = 560, BUMP_FUEL = .04, BUMP_COINS = 3, ROLL = 200;
 
 function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
 
 function buildLevel(n) {
   const spec = SPECS[n], rand = rng(n * 7919 + 13), items = [], forks = [], obs = [];
-  const place = (kind, x, lane = 0) => obs.push({ kind, x, lane, ...OBST[kind], live: true, age: 0 });
+  const place = (kind, x, lane = 0) => obs.push({ kind, x, lane, ...OBST[kind], end: x + (OBST[kind].run || 0), live: true, age: 0 });
   const coinRow = (x0, count, lane, gap = 92) => {
     for (let i = 0; i < count; i++) items.push({ kind: 'coin', x: x0 + i * gap, lane, lift: 62 + Math.sin(i / Math.max(1, count - 1) * Math.PI) * 56 });
   };
@@ -365,7 +416,10 @@ function buildLevel(n) {
   for (let i = 0; i < spec.forks; i++) {
     coinRow(x + 250, 5, 0); coinRow(x + 1250, 5, 0);
     if (spec.mainFuel && i % spec.mainFuel === 0) can(x + 900, 0);
-    for (const kind of spec.obs || []) place(kind, x + OBST[kind].at);
+    for (const kind of spec.obs || []) {
+      place(kind, x + OBST[kind].at);
+      if (kind === 'ramp') for (let j = 0; j < 4; j++) items.push({ kind: 'coin', x: x + 1620 + j * 80, lane: 0, lift: 230 + 50 * Math.sin(j * 1.05) });
+    }
     x += STRETCH;
     const a = x, b = a + FORK_LEN, m = (a + b) / 2, fuelLane = rand() < .5 ? -1 : 1, coinLane = -fuelLane;
     forks.push({ a, b, fuelLane, both: !!spec.bothFuel });
@@ -379,10 +433,14 @@ function buildLevel(n) {
   const scenery = [];
   const t = THEMES[n];
   for (let sx = 200; sx < finish + 1400; sx += 240 + rand() * 320) scenery.push({ x: sx, kind: t.sprites[Math.floor(rand() * t.sprites.length)], flip: rand() < .5 });
+  if (t.landmark) for (const lx of forks.length ? forks.map(f => f.a - 1100) : [1500, 4000, 6500]) {
+    for (let i = scenery.length - 1; i >= 0; i--) if (Math.abs(scenery[i].x - lx) < 260) scenery.splice(i, 1);
+    scenery.push({ x: lx, kind: t.landmark, flip: false });
+  }
   const clouds = Array.from({ length: 9 }, () => ({ x: rand() * 2600, y: 40 + rand() * 170, s: .6 + rand() * .8 }));
   let maxCoins = items.filter(i => i.kind === 'coin' && i.lane === 0).length;
   for (const f of forks) maxCoins += Math.max(...[-1, 1].map(l => items.filter(i => i.kind === 'coin' && i.lane === l && i.x > f.a && i.x < f.b).length));
-  return { n, theme: t, items, forks, obs, critter: CRITTERS[n], finish, scenery, clouds, maxCoins, ph: n * 1.7, seen: 0 };
+  return { n, theme: t, items, forks, obs, critter: t.critter, finish, scenery, clouds, maxCoins, ph: n * 1.7, seen: 0 };
 }
 
 const baseY = (L, x) => 436 + 32 * Math.sin(x * .0011 + L.ph) + 16 * Math.sin(x * .0027 + L.ph * 2);
@@ -429,19 +487,22 @@ const sfx = {
   win() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, i * .13, .3, .13)); },
   bump() { beep(150, 0, .2, .17, 'sine', .5); beep(620, .14, .12, .08, 'sine', 1.6); beep(820, .24, .14, .08, 'sine', 1.3); },
   splash() { [0, .05, .1].forEach(t => beep(300 + t * 3000, t, .12, .06, 'sine', .5)); },
+  ice() { [1200, 1500, 1900].forEach((f, i) => beep(f, i * .07, .24, .05, 'sine', 1.3)); },
+  boing() { beep(200, 0, .4, .13, 'sine', 3); },
+  toot() { beep(330, 0, .16, .1, 'square'); beep(440, .2, .3, .1, 'square'); },
   sput() { [0, .22, .5].forEach(t => beep(110, t, .14, .1, 'sawtooth', .6)); },
   lost() { [523, 494, 440, 392].forEach((f, i) => beep(f, i * .2, .32, .09, 'sine')); },
 };
 
 /* ---------- game state ---------- */
 const S = { screen: 'title', L: buildLevel(0), x: 300, v: 0, lane: 0, fuel: 1, coins: 0, gas: false, wheel: 0, honkT: 0, heldAt: 0,
-  blink: 3, lidMood: 0, t: 0, emptyT: 0, doneT: 0, lowDone: false, activeFork: null, parts: [], fall: [], shake: 0, hop: 0, hopV: 0, stunT: 0, slowT: 0, waitT: 0, spare: 0, trial: null, tab: 'paint', pick: null };
+  blink: 3, lidMood: 0, t: 0, emptyT: 0, doneT: 0, lowDone: false, activeFork: null, parts: [], fall: [], shake: 0, hop: 0, hopV: 0, stunT: 0, slowT: 0, iceT: 0, waitT: 0, whoNext: 'map', greeted: false, spare: 0, trial: null, tab: 'paint', pick: null };
 const V_MAX = 400, ACCEL = 300, COAST = 380, STOP_BRAKE = 420;
 
 function resetRun(n) {
   S.L = buildLevel(n); S.x = 180; S.v = 0; S.lane = 0; S.fuel = 1; S.coins = 0; S.gas = false; S.emptyT = 0; S.doneT = 0;
   S.lowDone = false; S.activeFork = null; S.parts = []; S.heldAt = 0; S.lidMood = 0; tuneAt = 0;
-  S.spare = skill('spare'); S.hop = S.hopV = S.stunT = S.slowT = S.waitT = 0;
+  S.spare = skill('spare'); S.hop = S.hopV = S.stunT = S.slowT = S.iceT = S.waitT = 0;
   S.L.items.forEach(i => i.got = false);
 }
 
@@ -449,8 +510,8 @@ function show(screen) {
   S.screen = screen;
   const playing = screen === 'play' || screen === 'win' || screen === 'lost';
   $('title').hidden = screen !== 'title'; $('map').hidden = screen !== 'map';
-  $('win').hidden = screen !== 'win'; $('lost').hidden = screen !== 'lost'; $('shop').hidden = screen !== 'shop';
-  $('hud').hidden = !playing; $('gas').hidden = screen !== 'play'; $('act').hidden = screen !== 'play' || !S.L.obs.length;
+  $('who').hidden = screen !== 'who'; $('win').hidden = screen !== 'win'; $('lost').hidden = screen !== 'lost'; $('shop').hidden = screen !== 'shop';
+  $('hud').hidden = !playing; $('gas').hidden = screen !== 'play'; $('act').hidden = screen !== 'play' || !S.L.obs.some(o => !o.soft);
   $('up').hidden = $('down').hidden = true;
   S.trial = S.pick = null;
   if (screen === 'map') renderMap();
@@ -472,9 +533,10 @@ function chooseLane(lane) {
 }
 
 function obstacleOnRoute(o) { return o.lane === 0 || o.lane === S.lane; }
-function blockingCritter() { return S.L.obs.find(o => o.kind === 'critter' && o.live && !o.gone && o.x > S.x && o.x - S.x < 760); }
+function blockingCritter() { return S.L.obs.find(o => o.h === 999 && o.live && !o.gone && o.x > S.x && o.x - S.x < 760); }
 function shoo(o) {
   o.gone = true; o.age = 0; o.y = 0; o.vx = 70; o.vy = -430; S.waitT = 0;
+  if (o.kind === 'slow') { o.vx = 460; o.vy = 0; sfx.toot(); return; } // a vehicle speeds off and turns away
   const y = roadY(S.L, o.x, 0) - 50;
   for (let i = 0; i < 6; i++) S.parts.push({ x: o.x, y, vx: -60 + i * 26, vy: -130 - i * 16, life: .9, age: 0, r: 11, c: '#f2577d', g: 120, shape: 'hearts' });
   beep(880, .08, .12, .09, 'sine', 1.5);
@@ -489,11 +551,19 @@ function act() {
 function hitObstacle(o) {
   o.live = false;
   const y = roadY(S.L, o.x, o.lane) - 30;
-  if (o.kind === 'puddle') {
+  if (o.kind === 'puddle') { // a snowdrift up north
+    const snow = S.L.theme.snowy;
     S.slowT = 1.1; sfx.splash();
-    for (let i = 0; i < 24; i++) spark(S.x + 30, y + 16, i % 2 ? '#7cc7ee' : '#b7e3f7');
+    for (let i = 0; i < 24; i++) spark(S.x + 30, y + 16, snow ? '#fff' : i % 2 ? '#7cc7ee' : '#b7e3f7');
     return;
   }
+  if (o.kind === 'hump') { hop(250); return; }
+  if (o.kind === 'ramp') {
+    hop(JUMP * 1.2); sfx.boing();
+    for (let i = 0; i < 12; i++) S.parts.push({ x: S.x, y, vx: -120 + i * 22, vy: -200, life: .7, age: 0, r: 10, c: '#f6c21c', g: 300, shape: 'stars' });
+    return;
+  }
+  if (o.kind === 'ice') { S.iceT = 1.2; sfx.ice(); return; }
   S.stunT = .7; S.v = 0; S.honkT = .5; sfx.bump();
   S.fuel = Math.max(0, S.fuel - BUMP_FUEL);
   const lost = Math.min(BUMP_COINS, S.coins);
@@ -501,7 +571,7 @@ function hitObstacle(o) {
   $('coinN').textContent = S.coins;
   for (let i = 0; i < lost; i++) S.parts.push({ x: S.x + 20, y: y - 60, vx: -150 + i * 150, vy: -420, life: 1, age: 0, r: 20, c: '#f6c21c', g: 900 });
   for (let i = 0; i < 7; i++) S.parts.push({ x: S.x, y: y - 130, vx: Math.cos(i * .9) * 130, vy: Math.sin(i * .9) * 80 - 40, life: .75, age: 0, r: 12, c: '#f6c21c', g: 0, shape: 'stars' });
-  for (let i = 0; i < 10; i++) spark(o.x, y, o.kind === 'rock' ? '#9aa2b2' : o.kind === 'log' ? '#8a5c34' : '#e0b65a');
+  for (let i = 0; i < 10; i++) spark(o.x, y, o.kind === 'rock' ? '#9aa2b2' : o.kind === 'log' ? '#8a5c34' : o.kind === 'cones' ? '#f08a2c' : '#e0b65a');
 }
 function cleared(o) { // a clean jump earns a coin
   S.coins++; save.total++; persist(); $('coinN').textContent = S.coins;
@@ -548,7 +618,7 @@ function update(dt) {
   for (const p of S.parts) { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; }
   S.parts = S.parts.filter(p => p.age < p.life);
 
-  if (S.screen === 'title' || S.screen === 'map') {
+  if (S.screen === 'title' || S.screen === 'map' || S.screen === 'who') {
     S.v = 150; S.x += S.v * dt;
     if (S.x > L.finish - 900) S.x = 300;
   } else if (S.screen === 'shop') {
@@ -561,8 +631,12 @@ function update(dt) {
     let target = !finished && !dry && S.gas ? top : 0;
     if (S.stunT > 0) { S.stunT -= dt; target = 0; S.v = 0; }
     if (S.slowT > 0) { S.slowT -= dt; target = Math.min(target, 190); }
+    if (S.iceT > 0) { // no grip: the car slides on whatever the pedal says
+      S.iceT -= dt; target = Math.max(target, S.v);
+      if (Math.random() < dt * 30) S.parts.push({ x: S.x + Math.random() * 120 - 80, y: roadY(L, S.x, S.lane) - 6, vx: -40, vy: -60, life: .5, age: 0, r: 7, c: '#d8f2ff', g: 60, shape: 'stars' });
+    }
     const ahead = L.obs.find(o => o.live && obstacleOnRoute(o) && o.x > S.x - 20 && o.x - S.x < 620);
-    if (ahead && ahead.kind !== 'critter') target = Math.min(target, Math.max(300, top * .75)); // a little more time to jump
+    if (ahead && !ahead.soft && ahead.h < 999) target = Math.min(target, Math.max(300, top * .75)); // a little more time to jump
     S.v += clamp(target - S.v, -(finished ? 300 : dry ? 170 : COAST) * dt, ACCEL * (1 + .15 * skill('turbo')) * dt);
 
     // a fork waits for a choice, with no clock on it
@@ -588,7 +662,7 @@ function update(dt) {
       const room = blocker.x - 215 - S.x;
       S.v = Math.min(S.v, Math.sqrt(2 * STOP_BRAKE * Math.max(0, room)));
       if (room < 3) S.v = 0;
-      if (S.v < 5) { S.waitT += dt; if (S.waitT > 3.2) shoo(blocker); } // animals wander off by themselves too
+      if (S.v < 5 || (blocker.kind === 'slow' && room < 70)) { S.waitT += dt; if (S.waitT > 3.2) shoo(blocker); } // animals wander off by themselves too
     }
     if (S.lane && S.activeFork && S.x >= S.activeFork.b) { S.lane = 0; S.activeFork = null; }
 
@@ -614,14 +688,15 @@ function update(dt) {
     if (S.v > 60 && Math.random() < dt * 9) trail(S.x - 128, roadY(L, S.x, S.lane) - 40);
     for (const o of L.obs) {
       o.age += dt;
-      if (o.gone) { o.x += o.vx * dt; o.y += o.vy * dt; o.vy += 900 * dt; if (o.age > 1.3) o.live = false; continue; }
+      if (o.gone) { o.x += o.vx * dt; o.y += o.vy * dt; if (o.kind !== 'slow') o.vy += 900 * dt; if (o.age > 1.3) o.live = false; continue; }
       if (!o.live) continue;
-      if (o.kind === 'roller' && o.x - S.x < 1000 && !blockingCritter()) { o.rolling = true; }
+      if ((o.kind === 'roller' || o.kind === 'ball') && o.x - S.x < 1000 && !blockingCritter()) { o.rolling = true; }
+      if (o.kind === 'slow') { if (o.x - S.x < 740) o.x += 120 * dt; if (o.x >= o.end) shoo(o); }
       if (o.rolling) { o.x -= ROLL * dt; o.spin = (o.spin || 0) - ROLL * dt / 38; }
-      if (o.kind === 'critter' || !obstacleOnRoute(o)) continue;
+      if (o.h === 999 || !obstacleOnRoute(o)) continue;
       const dx = Math.abs(o.x - S.x - 20);
       if (dx < o.w / 2 + 12 && S.hop < o.h) hitObstacle(o);
-      else if (o.x < S.x - 110) { o.live = false; if (S.hop > 0 || o.kind === 'roller') cleared(o); }
+      else if (o.x < S.x - 110) { o.live = false; if (S.hop > 0 || o.rolling) cleared(o); }
     }
     if (S.fuel < .25 && !S.lowDone && !finished) { S.lowDone = true; sfx.low(); }
 
@@ -638,7 +713,7 @@ function update(dt) {
 
     $('fuelFill').style.width = S.fuel * 100 + '%';
     $('spare').hidden = !S.spare;
-    const horn = !!blockingCritter(), near = horn || L.obs.some(o => o.live && !o.gone && o.h < 999 && o.kind !== 'puddle' && obstacleOnRoute(o) && o.x > S.x && o.x - S.x < 520);
+    const horn = !!blockingCritter(), near = horn || L.obs.some(o => o.live && !o.gone && o.h < 999 && !o.soft && obstacleOnRoute(o) && o.x > S.x && o.x - S.x < 520);
     const actBtn = $('act');
     if (actBtn.classList.contains('horn') !== horn || !actBtn.firstChild) {
       actBtn.classList.toggle('horn', horn); actBtn.setAttribute('aria-label', horn ? 'Horn' : 'Jump');
@@ -681,6 +756,7 @@ function resize() {
   // fork buttons sit just ahead of the car and clear of the gas pedal
   const vmin = Math.min(W, H), half = clamp(vmin * .27, 104, 172) / 2, gasW = clamp(vmin * .34, 124, 230);
   const carRight = (clamp(vw * .32, 230, 460) + 134) * sc;
+  $('app').style.setProperty('--hello-y', Math.max(8, (436 + (vh - 720) / 2 - 196) * sc) + 'px');
   $('app').style.setProperty('--fork-x', Math.min(Math.max(W * .47, carRight + half + 14), W - gasW - half - 26) + 'px');
 }
 addEventListener('resize', resize);
@@ -741,6 +817,14 @@ function drawSky(T, camX) {
       const px = i * 170 - shift, h = 150 + ((i + 100) * 71 % 90);
       g.beginPath(); g.moveTo(px, 400 + ex - h); g.lineTo(px + 26, 400 + ex - h + 42); g.lineTo(px - 26 + 2, 400 + ex - h + 42); g.fill();
     }
+  } else if (T.skyline) {
+    const shift = camX * .15, first = Math.floor(shift / 74) - 1;
+    for (let i = first; i < first + vw / 74 + 3; i++) {
+      const n = Math.abs(i * 2654435761 % 977), h = 70 + n % 130, w = 58 + n % 16, px = i * 74 - shift;
+      g.fillStyle = T.far; g.fillRect(px, 410 + ex - h, w, h + 20);
+      g.fillStyle = 'rgba(255,255,255,.42)';
+      for (let wy = 14; wy < h - 6; wy += 24) for (let wx = 10; wx < w - 12; wx += 18) if ((n + wy + wx) % 5) g.fillRect(px + wx, 410 + ex - h + wy, 8, 12);
+    }
   } else fillSine(330 + ex, 34, .0042, camX * .15, T.far);
   if (T.lake) {
     g.fillStyle = T.mid; g.fillRect(0, 372 + ex, vw, vh);
@@ -769,7 +853,118 @@ function drawRoad(L, T, camX, lane, x0, x1) {
   sub(T.road, 36, 18); sub('rgba(255,255,255,.14)', 4, 3); sub(T.snowy ? '#f9e27a' : '#ffffff', 5, 19, [30, 44]);
 }
 
+function poly(pts, col) { g.fillStyle = col; g.beginPath(); pts.forEach(([x, y]) => g.lineTo(x, y)); g.closePath(); g.fill(); }
+const HOUSE = ['#e8b26a', '#d98a6a', '#7fb0c8', '#e3d3a8', '#c96f5a'];
+const pick = (c, list) => list[Math.abs(Math.round(c.seed || 0)) % list.length];
 const SPRITE = {
+  windmill(c) {
+    poly([[-36, 0], [-22, -122], [22, -122], [36, 0]], '#f4efe2'); poly([[-27, -120], [0, -152], [27, -120]], '#7a5232'); rect(c, -10, -34, 20, 34, '#7a5232');
+    g.save(); g.translate(0, -122); g.rotate(S.t * .8);
+    for (let i = 0; i < 4; i++) { g.rotate(1.5708); rect(c, -4, 0, 8, 98, '#7a5232'); rect(c, 4, 24, 22, 72, '#fff'); }
+    g.restore();
+  },
+  korsvirke(c) {
+    rect(c, -92, -74, 184, 74, '#f1e3c4'); poly([[-104, -72], [-70, -130], [70, -130], [104, -72]], '#c9a44c');
+    for (const x of [-92, -46, 0, 46, 86]) rect(c, x, -74, 6, 74, '#6d4426');
+    rect(c, -92, -40, 184, 5, '#6d4426'); rect(c, -14, -36, 20, 36, '#1d6f9a'); rect(c, -66, -66, 16, 18, '#bfe6f5'); rect(c, 56, -66, 16, 18, '#bfe6f5');
+  },
+  block(c) {
+    const h = 170 + Math.abs(Math.round(c.seed || 0)) % 90, col = pick(c, S.L.theme.snowy ? ['#c96f5a', '#7fb0c8', '#e8b26a'] : HOUSE), lit = S.L.theme.night ? '#ffdd70' : '#d9f0fa';
+    rect(c, -64, -h, 128, h, col); rect(c, -70, -h - 8, 140, 10, S.L.theme.snowy ? '#fff' : '#5b5a62');
+    for (let y = -h + 16; y < -46; y += 44) for (const x of [-48, -14, 20]) rect(c, x, y, 26, 28, lit);
+    rect(c, -16, -38, 32, 38, '#12306b');
+  },
+  lamp(c) { rect(c, -3, -130, 6, 130, '#5b5a62'); rect(c, -3, -132, 34, 6, '#5b5a62'); blob(c, [[29, -122, 9]], '#ffe58a'); },
+  torso(c) { // Turning Torso
+    for (let i = 0; i < 12; i++) {
+      const y = -28 * (i + 1), d = Math.sin(i * .55) * 18;
+      rect(c, -32 + d, y, 64, 27, i % 2 ? '#eef3f8' : '#dbe5ef'); for (const x of [-22, -4, 14]) rect(c, x + d, y + 8, 12, 11, '#86bfe0');
+    }
+  },
+  ferris(c) { // Liseberg
+    g.strokeStyle = '#5b6b86'; g.lineWidth = 9; g.lineCap = 'round'; g.beginPath(); g.moveTo(-74, 0); g.lineTo(0, -160); g.lineTo(74, 0); g.stroke();
+    g.save(); g.translate(0, -160); g.lineWidth = 6; g.strokeStyle = '#f4614d'; g.beginPath(); g.arc(0, 0, 138, 0, 7); g.stroke();
+    const a = S.t * .25, C = ['#f4614d', '#f6c21c', '#22b3a6', '#f2577d', '#1d9bf0', '#7a5cd6'];
+    for (let i = 0; i < 12; i++) {
+      const t = a + i * .5236, x = Math.cos(t) * 138, y = Math.sin(t) * 138;
+      g.strokeStyle = 'rgba(244,97,77,.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 0); g.lineTo(x, y); g.stroke();
+      g.fillStyle = C[i % 6]; g.beginPath(); g.roundRect(x - 14, y, 28, 24, 7); g.fill();
+    }
+    g.restore();
+  },
+  crane(c) {
+    rect(c, -50, -170, 10, 170, '#1d6f9a'); rect(c, 40, -170, 10, 170, '#1d6f9a'); rect(c, -110, -180, 240, 16, '#e8483f');
+    rect(c, 90, -164, 4, 70, '#2b2d38'); rect(c, 74, -98, 36, 26, '#f6c21c');
+  },
+  stadshus(c) { // Stockholm city hall
+    rect(c, -130, -96, 260, 96, '#b5583f'); for (let x = -112; x < 112; x += 42) rect(c, x, -74, 22, 40, '#7fb0c8');
+    rect(c, 56, -270, 62, 270, '#b5583f'); rect(c, 66, -256, 42, 26, '#7a3a2a'); poly([[50, -270], [87, -306], [124, -270]], '#3f9a84');
+    rect(c, 84, -326, 6, 24, '#d9a514');
+    g.fillStyle = '#f6c21c'; [[-13, -336], [13, -336], [0, -352]].forEach(([x, y]) => { g.beginPath(); g.arc(87 + x, y, 8, 0, 7); g.fill(); });
+  },
+  gamla(c) { // gabled houses of Gamla stan
+    [[-84, '#d98a4a'], [-28, '#e3c26a'], [28, '#c9604a'], [84, '#e0a878']].forEach(([x, col], i) => {
+      const h = 130 + (i % 2) * 28;
+      rect(c, x - 28, -h, 56, h, col); poly([[x - 28, -h], [x, -h - 34], [x + 28, -h]], col);
+      for (const wy of [-h + 12, -h + 56]) for (const wx of [-16, 6]) rect(c, x + wx, wy, 11, 24, '#fff5d6');
+    });
+  },
+  lighthouse(c) {
+    poly([[-32, 0], [-20, -190], [20, -190], [32, 0]], '#fff');
+    poly([[-29.5, -40], [-26.500, -90], [26.500, -90], [29.500, -40]], '#e8483f'); poly([[-24, -130], [-21.500, -170], [21.500, -170], [24, -130]], '#e8483f');
+    rect(c, -26, -196, 52, 8, '#12306b'); rect(c, -15, -226, 30, 30, '#ffe58a'); poly([[-20, -226], [0, -250], [20, -226]], '#12306b');
+  },
+  sjobod(c) {
+    rect(c, -62, -22, 8, 22, '#6d4426'); rect(c, 54, -22, 8, 22, '#6d4426');
+    rect(c, -70, -92, 140, 72, '#b5382f'); poly([[-82, -90], [0, -132], [82, -90]], '#8c8c94');
+    rect(c, -18, -72, 36, 52, '#f4efe2'); rect(c, 34, -74, 22, 22, '#bfe6f5');
+  },
+  ferry(c) {
+    poly([[-120, -44], [120, -44], [96, 0], [-100, 0]], '#fff'); rect(c, -120, -18, 230, 8, '#1d6f9a');
+    rect(c, -76, -82, 130, 40, '#f4efe2'); for (let x = -66; x < 40; x += 26) rect(c, x, -74, 16, 18, '#7fb0c8');
+    rect(c, -18, -122, 26, 42, '#12306b'); rect(c, -18, -110, 26, 10, '#f6c21c');
+  },
+  pole(c) { // midsommarstång
+    rect(c, -6, -210, 12, 210, '#6d4426'); rect(c, -62, -176, 124, 9, '#6d4426');
+    g.strokeStyle = '#4f9a48'; g.lineWidth = 11; for (const x of [-46, 46]) { g.beginPath(); g.arc(x, -130, 33, 0, 7); g.stroke(); }
+    g.strokeStyle = '#4f9a48'; g.beginPath(); g.moveTo(0, -210); g.lineTo(0, 0); g.moveTo(-62, -172); g.lineTo(62, -172); g.stroke();
+    ['#f2577d', '#f6c21c', '#fff', '#7a5cd6'].forEach((col, i) => blob(c, [[-46 + i * 30, -172, 7], [-3, -195 + i * 46, 7]], col));
+    blob(c, [[0, -214, 10]], '#f6c21c');
+  },
+  dalahorse(c) {
+    const R = '#e8483f';
+    poly([[-46, -38], [38, -38], [46, 0], [20, 0], [14, -14], [-20, -14], [-26, 0], [-52, 0]], R);
+    poly([[12, -38], [28, -92], [66, -78], [58, -60], [40, -62], [36, -38]], R);
+    poly([[-46, -40], [-68, -30], [-60, -8], [-46, -22]], '#12306b'); poly([[18, -78], [32, -100], [44, -84]], '#12306b');
+    rect(c, -32, -40, 54, 12, '#12306b'); blob(c, [[-20, -33, 4], [-6, -33, 4], [8, -33, 4]], '#f6c21c'); blob(c, [[48, -76, 3.5]], '#fff');
+  },
+  bridge(c) { // Högakustenbron
+    rect(c, -210, -330, 24, 330, '#d9d3c4'); rect(c, 186, -330, 24, 330, '#d9d3c4'); rect(c, -214, -240, 32, 12, '#c4bdac'); rect(c, 182, -240, 32, 12, '#c4bdac');
+    rect(c, -330, -116, 660, 14, '#e8e2d2');
+    g.strokeStyle = '#8d95a5'; g.lineWidth = 6; g.beginPath(); g.moveTo(-330, -116); g.lineTo(-198, -330); g.quadraticCurveTo(0, -30, 198, -330); g.lineTo(330, -116); g.stroke();
+    g.lineWidth = 2; for (let x = -160; x <= 160; x += 40) { const t = (x + 198) / 396, y = (1 - t) * (1 - t) * -330 + 2 * t * (1 - t) * -30 + t * t * -330; g.beginPath(); g.moveTo(x, y); g.lineTo(x, -116); g.stroke(); }
+  },
+  lavvu(c) { // Sami tent
+    poly([[-78, 0], [0, -128], [78, 0]], '#c9b08a'); poly([[-16, 0], [0, -46], [16, 0]], '#4b3220');
+    rect(c, -78, -18, 156, 8, '#e8483f'); rect(c, -78, -28, 156, 5, '#1d6f9a');
+    g.strokeStyle = '#6d4426'; g.lineWidth = 5; g.beginPath(); g.moveTo(-9, -142); g.lineTo(9, -112); g.moveTo(9, -142); g.lineTo(-9, -112); g.stroke();
+  },
+  icehotel(c) {
+    g.fillStyle = '#8fd0ee'; g.beginPath(); g.moveTo(-150, 0); g.lineTo(-150, -80); g.quadraticCurveTo(0, -170, 150, -80); g.lineTo(150, 0); g.fill();
+    g.fillStyle = '#3f9fd0'; g.beginPath(); g.moveTo(-40, 0); g.lineTo(-40, -50); g.quadraticCurveTo(0, -100, 40, -50); g.lineTo(40, 0); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 3; for (const x of [-120, -80, 80, 120]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, -86); g.stroke(); }
+    blob(c, [[-60, -108, 8], [60, -108, 8]], '#fff');
+  },
+  church(c) { // Kiruna church
+    poly([[-104, 0], [-104, -44], [0, -180], [104, -44], [104, 0]], '#a8342c'); poly([[-112, -38], [0, -186], [112, -38], [84, -38], [0, -150], [-84, -38]], '#fff');
+    rect(c, -16, -46, 32, 46, '#5b2a22'); rect(c, -2, -216, 4, 34, '#5b5a62'); rect(c, -11, -206, 22, 4, '#5b5a62');
+  },
+  dog(c) { rect(c, -24, -22, 8, 22, '#b77c45'); rect(c, 16, -22, 8, 22, '#b77c45'); rect(c, -28, -42, 58, 24, '#c98c52'); blob(c, [[36, -50, 15]], '#c98c52'); poly([[28, -62], [20, -44], [34, -50]], '#7a5232'); blob(c, [[50, -47, 4], [40, -53, 2.400]], '#2b2d38'); poly([[-28, -40], [-44, -60], [-24, -34]], '#c98c52'); },
+  seagull(c) { blob(c, [[-4, -24, 20], [20, -44, 13]], '#fff'); poly([[-22, -32], [-46, -24], [-16, -18]], '#8d95a5'); poly([[-16, -34], [14, -32], [-8, -14]], '#b9c1cc'); poly([[31, -47], [48, -42], [31, -38]], '#f6c21c'); rect(c, -6, -6, 4, 7, '#f08a2c'); rect(c, 4, -6, 4, 7, '#f08a2c'); blob(c, [[23, -48, 2.400]], '#2b2d38'); },
+  seal(c) { g.fillStyle = '#7f8ea3'; g.beginPath(); g.ellipse(-8, -18, 40, 18, -.1, 0, 7); g.fill(); blob(c, [[28, -36, 18]], '#7f8ea3'); poly([[-44, -14], [-68, -24], [-62, -4]], '#6b7a90'); poly([[4, -6], [22, 0], [-4, 0]], '#6b7a90'); blob(c, [[34, -40, 3], [24, -40, 3], [42, -32, 3]], '#2b2d38'); },
+  moose(c) { if (moose.complete && moose.naturalWidth) g.drawImage(moose, -60, -126, 120, 126); },
+  bear(c) { rect(c, -30, -24, 16, 24, '#6a4526'); rect(c, 12, -24, 16, 24, '#6a4526'); blob(c, [[-14, -46, 28], [14, -46, 26], [40, -56, 18], [32, -72, 7]], '#7c5230'); blob(c, [[52, -52, 9]], '#c9a06e'); blob(c, [[58, -54, 3.500], [44, -62, 2.500]], '#2b2d38'); },
+  fox(c) { poly([[-30, -16], [-60, -46], [-22, -34]], '#fff'); blob(c, [[-6, -28, 22], [14, -28, 18], [30, -42, 15]], '#fff'); poly([[20, -52], [24, -68], [34, -54]], '#e7eef6'); poly([[34, -52], [42, -66], [44, -48]], '#e7eef6'); rect(c, -14, -16, 7, 16, '#e7eef6'); rect(c, 14, -16, 7, 16, '#e7eef6'); blob(c, [[46, -38, 3.500], [34, -46, 2.400]], '#2b2d38'); },
   birch(c) { rect(c, -7, -120, 14, 120, '#f4f1e8'); [-104, -74, -40].forEach(y => rect(c, -7, y, 8, 5, '#3a3a3a')); blob(c, [[-34, -128, 36], [18, -146, 42], [36, -112, 30], [-8, -172, 32]], '#7cc24f'); },
   pine(c) { rect(c, -7, -30, 14, 30, '#6d4a2e'); tri(c, 0, -160, 44, -86, '#2f7d4e'); tri(c, 0, -124, 56, -50, '#34895a'); tri(c, 0, -88, 64, -16, '#2f7d4e'); },
   snowpine(c) { rect(c, -7, -30, 14, 30, '#6d4a2e'); tri(c, 0, -160, 44, -86, '#3d7f68'); tri(c, 0, -124, 56, -50, '#3d7f68'); tri(c, 0, -88, 64, -16, '#3d7f68'); tri(c, 0, -160, 22, -124, '#fff'); tri(c, 0, -116, 26, -86, '#fff'); tri(c, 0, -78, 30, -48, '#fff'); },
@@ -823,6 +1018,22 @@ function drawObstacle(L, o) {
     const bob = o.gone ? 0 : Math.abs(Math.sin(S.t * 3.4)) * 8;
     g.translate(0, (o.gone ? o.y : 0) - bob); g.scale(-1.3, 1.3);
     SPRITE[L.critter]({});
+  } else if (o.kind === 'slow') {
+    drawVehicle(L.theme.vehicle);
+  } else if (o.kind === 'cones') {
+    for (const cx of [-44, 0, 44]) { poly([[cx - 18, 0], [cx, -52], [cx + 18, 0]], '#f08a2c'); poly([[cx - 10.500, -21], [cx - 5.500, -35], [cx + 5.500, -35], [cx + 10.500, -21]], '#fff'); rect(0, cx - 22, -5, 44, 6, '#d96f18'); }
+  } else if (o.kind === 'hump') {
+    g.fillStyle = '#f6c21c'; g.beginPath(); g.ellipse(0, 12, 60, 15, 0, Math.PI, 0); g.fill();
+    g.fillStyle = '#2b2d38'; for (const hx of [-34, -8, 18, 40]) g.fillRect(hx, 0, 10, 12);
+  } else if (o.kind === 'ramp') {
+    poly([[-86, 8], [78, -56], [78, 8]], '#c28a4c'); poly([[-86, 8], [78, -56], [78, -46], [-64, 8]], '#e0b070');
+    g.fillStyle = '#fff'; for (const ax of [-20, 18, 54]) rtri(ax, -44 - ax * .28 + 18, 11, -22 - ax * .28 + 18);
+  } else if (o.kind === 'ice') {
+    g.fillStyle = '#d4f0fb'; g.beginPath(); g.ellipse(0, 12, 104, 13, 0, 0, 7); g.fill();
+    g.fillStyle = '#fff'; for (const ix of [-52, -6, 44]) { g.beginPath(); g.ellipse(ix, 9, 20, 2.500, -.1, 0, 7); g.fill(); }
+  } else if (o.kind === 'ball') {
+    g.translate(0, -36 - (calm ? 0 : Math.abs(Math.sin(S.t * 4.2)) * 46)); g.rotate(o.spin || 0);
+    drawBall(L.theme);
   } else if (o.kind === 'log') {
     rect(0, -55, -44, 110, 44, '#8a5c34'); rect(0, -55, -32, 110, 5, '#6d4426'); rect(0, -55, -16, 110, 5, '#6d4426');
     g.fillStyle = '#d9b077'; g.beginPath(); g.ellipse(55, -22, 12, 22, 0, 0, 7); g.fill();
@@ -831,8 +1042,11 @@ function drawObstacle(L, o) {
     blob(0, [[-22, -20, 26], [16, -32, 36], [36, -14, 20]], L.theme.snowy ? '#b9c9da' : '#8f97a8');
     blob(0, [[12, -46, 14]], L.theme.snowy ? '#fff' : '#b5bcc9');
   } else if (o.kind === 'puddle') {
-    g.fillStyle = L.theme.snowy ? '#bfe6f5' : '#6fbbe6'; g.beginPath(); g.ellipse(0, 12, 82, 13, 0, 0, 7); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-22, 9, 22, 3.5, 0, 0, 7); g.fill();
+    if (L.theme.snowy) blob(0, [[-46, 2, 26], [-10, -4, 36], [34, 0, 30], [62, 6, 18]], '#fff');
+    else {
+      g.fillStyle = '#6fbbe6'; g.beginPath(); g.ellipse(0, 12, 82, 13, 0, 0, 7); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-22, 9, 22, 3.5, 0, 0, 7); g.fill();
+    }
   } else {
     const look = L.theme.snowy ? ['#fff', '#d6e8f4'] : L.theme.name === 'autumn' ? ['#ef8a2c', '#c9641a'] : ['#e6c25a', '#c99f38'];
     g.translate(0, -36); g.rotate(o.spin || 0);
@@ -840,6 +1054,33 @@ function drawObstacle(L, o) {
     g.strokeStyle = look[1]; g.lineWidth = 5; g.beginPath(); g.arc(0, 0, 25, .4, 4.4); g.stroke(); g.beginPath(); g.arc(0, 0, 12, 2, 6); g.stroke();
   }
   g.restore();
+}
+function drawVehicle(id) { // each drives ahead of the car, nose to the right
+  const wheels = (list, r) => list.forEach(x => { blob(0, [[x, -r, r]], '#2b2d38'); blob(0, [[x, -r, r * .45]], '#f4f1e8'); });
+  if (id === 'tram') {
+    g.fillStyle = '#1d6f9a'; g.beginPath(); g.roundRect(-120, -112, 240, 94, 20); g.fill(); rect(0, -120, -52, 240, 12, '#fff');
+    for (const x of [-100, -56, -12, 32, 76]) rect(0, x, -98, 32, 34, '#d9f0fa');
+    g.strokeStyle = '#2b2d38'; g.lineWidth = 4; g.beginPath(); g.moveTo(-10, -112); g.lineTo(26, -148); g.lineTo(-20, -148); g.stroke();
+    wheels([-78, 78], 18);
+  } else if (id === 'plough') {
+    poly([[62, -50], [120, -54], [92, 0], [62, 0]], '#f6c21c'); g.fillStyle = '#f08a2c'; g.beginPath(); g.roundRect(-100, -70, 104, 54, 10); g.fill();
+    g.beginPath(); g.roundRect(2, -106, 66, 90, 12); g.fill(); rect(0, 14, -96, 42, 34, '#d9f0fa'); blob(0, [[34, -114, 8]], '#ffcf5a');
+    blob(0, [[110, -46, 13], [124, -30, 15], [110, -14, 13]], '#fff'); wheels([-70, 36], 22);
+  } else { // tractor
+    g.fillStyle = '#e8483f'; g.beginPath(); g.roundRect(-16, -74, 112, 44, 12); g.fill(); rect(0, -60, -140, 60, 8, '#5b5a62');
+    rect(0, -54, -134, 8, 70, '#5b5a62'); rect(0, -6, -134, 8, 70, '#5b5a62'); rect(0, -52, -126, 44, 56, 'rgba(190,232,250,.7)'); rect(0, -64, -82, 60, 54, '#e8483f');
+    rect(0, 70, -94, 8, 24, '#5b5a62'); blob(0, [[-44, -42, 42]], '#2b2d38'); blob(0, [[-44, -42, 20]], '#f6c21c'); wheels([78], 22);
+  }
+}
+function drawBall(T) {
+  if (T.snowy) { blob(0, [[0, 0, 38]], '#fff'); g.strokeStyle = '#d6e8f4'; g.lineWidth = 4; g.beginPath(); g.arc(0, 0, 24, .5, 3); g.stroke(); return; }
+  if (T.lake) {
+    ['#f4614d', '#fff', '#f6c21c', '#fff', '#1d9bf0', '#fff'].forEach((col, i) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 38, i * 1.0472, (i + 1) * 1.0472); g.fill(); });
+    return;
+  }
+  blob(0, [[0, 0, 38]], '#fff');
+  g.fillStyle = '#2b2d38'; for (let i = 0; i < 5; i++) { const a = i * 1.2566; g.beginPath(); g.arc(Math.cos(a) * 26, Math.sin(a) * 26, 10, 0, 7); g.fill(); }
+  g.beginPath(); g.arc(0, 0, 10, 0, 7); g.fill();
 }
 function drawCan(x, y) {
   const r = 58 + Math.sin(S.t * 4) * 6;
@@ -996,7 +1237,7 @@ function draw() {
   // back layer: the top road sits on a paler hill, the bottom road runs in front of it
   strip(L, camX, -1, bottom); g.fillStyle = T.back; g.fill();
   for (const s of L.scenery) {
-    if (s.x < camX - 160 || s.x > camX + vw + 160) continue;
+    if (s.x < camX - 360 || s.x > camX + vw + 360) continue;
     if (Math.abs(s.x - L.finish) < 240) continue;
     g.save(); g.translate(s.x, roadY(L, s.x, -1) + 4);
     const c = { leaf: s.x % 3 < 1.5 ? leaf : '#d9a02c', seed: s.x };
@@ -1022,7 +1263,7 @@ function draw() {
     if (it.kind === 'coin') drawCoin(it.x, y, it.x * .01); else drawCan(it.x, y - 8);
   }
   const slope = Math.atan2(roadY(L, S.x + 40, S.lane) - roadY(L, S.x - 40, S.lane), 80);
-  drawCar(S.x, car, slope);
+  drawCar(S.x, car, slope + (S.iceT > 0 && !calm ? Math.sin(S.t * 13) * .06 : 0));
   for (const p of S.parts) {
     const a = 1 - p.age / p.life;
     g.globalAlpha = a; drawPart(p, a);
@@ -1054,9 +1295,16 @@ function renderMap() {
   $('totalN').textContent = save.total;
   $('stops').innerHTML = THEMES.map((T, i) => {
     const locked = i > save.unlocked, stars = save.best[i] || 0;
-    return `<button class="stop ${i === save.unlocked ? 'here' : ''}" data-n="${i}" ${locked ? 'disabled' : ''} aria-label="Level ${i + 1}${locked ? ', locked' : ''}" style="background:linear-gradient(${T.sky[0]} 48%, ${T.ground} 49%)">${i + 1}<span class="stars">${stars ? [0, 1, 2].map(s => STAR(s < stars)).join('') : ''}</span></button>`;
+    return `<button class="stop ${i === save.unlocked ? 'here' : ''}" data-n="${i}" ${locked ? 'disabled' : ''} aria-label="Level ${i + 1}${locked ? ', locked' : ''}" style="background:linear-gradient(${T.sky[0]} 62%, ${T.ground} 63%)"><canvas width="160" height="160"></canvas><span class="num">${i + 1}</span><span class="stars">${stars ? [0, 1, 2].map(s => STAR(s < stars)).join('') : ''}</span></button>`;
   }).join('');
+  $('stops').querySelectorAll('canvas').forEach((c, i) => stopIcon(c, THEMES[i]));
   $('shopBtn').classList.toggle('nudge', cheapestWant() <= save.total);
+}
+
+function stopIcon(c, T) { // each stop shows what is up the road there
+  const was = g; g = c.getContext('2d');
+  g.translate(80, 128); g.scale(T.iconS, T.iconS); SPRITE[T.icon]({ leaf: T.name === 'autumn' ? '#e8702a' : '#6fb54a', seed: 3 });
+  g = was;
 }
 
 /* ---------- market ---------- */
@@ -1187,9 +1435,54 @@ function buyPick() {
 }
 function renderMute() { $('mute').innerHTML = $('mute2').innerHTML = SOUND(!save.muted); }
 
+/* ---------- who is playing. The name stays on this device, and a grown-up types it once ---------- */
+const SWEDISH = (navigator.language || '').toLowerCase().startsWith('sv');
+function renderHello() {
+  const b = $('hello');
+  b.hidden = !save.name; b.textContent = save.name ? `${SWEDISH ? 'Hej' : 'Hi'} ${save.name}!` : '';
+  $('whoBtn').hidden = !!save.name;
+}
+function sayHi() {
+  if (S.greeted || !save.name || save.muted || !window.speechSynthesis) return;
+  S.greeted = true;
+  const u = new SpeechSynthesisUtterance(`${SWEDISH ? 'Hej' : 'Hi'} ${save.name}!`);
+  u.lang = SWEDISH ? 'sv-SE' : 'en-GB'; u.rate = .9; u.pitch = 1.3;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function askName(next) {
+  S.whoNext = next; save.askedName = true; persist();
+  $('whoName').value = save.name; $('whoLabel').textContent = SWEDISH ? 'Vad heter du?' : "What's your name?";
+  show('who'); $('whoName').focus();
+}
+function setName(name) {
+  save.name = String(name).trim().slice(0, 20); S.greeted = false; persist(); renderHello();
+  show(S.whoNext); if (S.whoNext === 'map') sayHi();
+}
+
+/* ---------- full screen: iPhones have no such thing, so the button only shows where it can work ---------- */
+const root = document.documentElement, fsAsk = root.requestFullscreen || root.webkitRequestFullscreen;
+const installed = navigator.standalone || matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+const fsNow = () => document.fullscreenElement || document.webkitFullscreenElement;
+const FULL_ICON = on => `<svg viewBox="0 0 24 24"><path fill="none" stroke="#12306b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="${on ? 'M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6' : 'M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6'}"/></svg>`;
+function renderFull() {
+  document.querySelectorAll('.full').forEach(b => {
+    b.hidden = !fsAsk || installed; b.innerHTML = FULL_ICON(!!fsNow());
+    b.setAttribute('aria-label', fsNow() ? 'Leave full screen' : 'Full screen');
+  });
+}
+function toggleFull() {
+  if (fsNow()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else { const p = fsAsk.call(root); if (p && p.catch) p.catch(() => {}); }
+}
+['fullscreenchange', 'webkitfullscreenchange'].forEach(n => document.addEventListener(n, () => { renderFull(); resize(); }));
+
 /* ---------- input ---------- */
 const tap = (id, fn) => $(id).addEventListener('click', () => { wakeAudio(); sfx.tap(); fn(); });
-tap('titlePlay', () => show('map'));
+tap('titlePlay', () => { if (!save.askedName) return askName('map'); sayHi(); show('map'); });
+tap('hello', () => askName('title')); tap('whoBtn', () => askName('title'));
+tap('whoSkip', () => show(S.whoNext));
+$('whoForm').addEventListener('submit', e => { e.preventDefault(); wakeAudio(); sfx.tap(); setName($('whoName').value); });
+['fullT', 'fullM', 'fullH'].forEach(id => tap(id, toggleFull));
 tap('home', () => { persist(); resetRun(0); S.x = 300; show('map'); });
 const toggleMute = () => { save.muted = !save.muted; persist(); renderMute(); };
 tap('mute', toggleMute); tap('mute2', toggleMute);
@@ -1232,8 +1525,8 @@ addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('blur', gasOff);
 document.addEventListener('visibilitychange', () => { if (document.hidden) gasOff(); });
 
-if (location.hostname === 'localhost') window.lillaBil = { act, CATALOG, buyPick, pickWare, S, buildLevel, SPECS, TANK, startLevel, chooseLane, show, get save() { return save; }, tick: update };
-resize(); renderMute(); show('title'); requestAnimationFrame(frame);
+if (location.hostname === 'localhost') window.lillaBil = { act, CATALOG, buyPick, pickWare, S, buildLevel, SPECS, TANK, startLevel, chooseLane, show, setName, renderMap, draw, THEMES, get save() { return save; }, tick: update };
+resize(); renderMute(); renderHello(); renderFull(); show('title'); requestAnimationFrame(frame);
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

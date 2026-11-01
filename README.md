@@ -1,8 +1,9 @@
 # Lilla Bil
 
-A toddler-friendly 2D driving game: the moose from Lilla Piano and Lilla Lingua drives through
-eight levels, collects coins, honks at animals, jumps over logs and spends coins in a marketplace.
-Works offline after the first visit. Progress stays on the device, and nothing is collected.
+A toddler-friendly 2D driving game: the moose from Lilla Piano and Lilla Lingua drives
+north through Sweden in 16 levels, from Skåne to Abisko, collects coins, honks at animals, jumps over
+logs and spends coins in a marketplace. Works offline after the first visit. Progress and the
+player's name stay on the device, and nothing is collected.
 
 Plain static site: no build step. Everything in this folder is served as-is.
 
