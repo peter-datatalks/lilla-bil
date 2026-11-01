@@ -3,11 +3,12 @@
 // or when the network takes longer than 3 seconds.
 
 // Bump the version when releasing so every device downloads the new app files.
-const SHELL = 'lb-shell-v9';
+const SHELL = 'lb-shell-v11';
 
 const APP_FILES = [
   './',
   'index.html',
+  'bonus.js',
   'manifest.webmanifest',
   'assets/moose.webp',
   'assets/logo.webp',
