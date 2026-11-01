@@ -1,0 +1,12 @@
+{
+  "name": "Lilla Bil",
+  "short_name": "Lilla Bil",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#f8f3e6",
+  "theme_color": "#f8f3e6",
+  "icons": [
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
