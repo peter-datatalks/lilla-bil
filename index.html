@@ -719,16 +719,71 @@ function beep(freq, at, len, vol = .13, type = 'triangle', slide = 0) {
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0008, t + len);
   o.connect(g).connect(master); o.start(t); o.stop(t + len + .02);
 }
+/* A tiny voice: a buzz (and some breath) shaped by vowel filters, the way a throat and mouth shape sound.
+   pitch and each formant are a number or a curve of [share of the length, value] pairs. */
+let noiseBuf = null;
+function noiseSrc() {
+  if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true; return n;
+}
+function curve(param, v, t, len) {
+  if (typeof v === 'number') { param.setValueAtTime(v, t); return; }
+  param.setValueAtTime(v[0][1], t);
+  for (const [p, f] of v.slice(1)) param.linearRampToValueAtTime(f, t + p * len);
+}
+function voice({ at = 0, len, type = 'sawtooth', pitch, formants = [], vol = .14, vib = 0, vibRate = 5, attack = .03, breath = 0 }) {
+  if (!ac || save.muted) return;
+  const t = ac.currentTime + at, out = ac.createGain();
+  out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(vol, t + attack);
+  out.gain.setValueAtTime(vol, t + Math.max(attack, len - .09)); out.gain.linearRampToValueAtTime(0, t + len);
+  out.connect(master);
+  const sinks = formants.length ? formants.map(([f, q, gain = 1]) => {
+    const bp = ac.createBiquadFilter(), gn = ac.createGain();
+    bp.type = 'bandpass'; bp.Q.value = q; curve(bp.frequency, f, t, len); gn.gain.value = gain; bp.connect(gn).connect(out); return bp;
+  }) : [out];
+  if (pitch) {
+    const o = ac.createOscillator(); o.type = type; curve(o.frequency, pitch, t, len);
+    if (vib) { const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = vibRate; lg.gain.value = vib; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + len + .05); }
+    sinks.forEach(s => o.connect(s)); o.start(t); o.stop(t + len + .05);
+  }
+  if (breath) { const n = noiseSrc(), ng = ac.createGain(); ng.gain.value = breath; n.connect(ng); sinks.forEach(s => ng.connect(s)); n.start(t); n.stop(t + len + .05); }
+}
+function ting(at, f, len, vol) { // one metal bell partial, struck and dying away
+  if (!ac || save.muted) return;
+  const t = ac.currentTime + at, o = ac.createOscillator(), gn = ac.createGain();
+  o.type = 'sine'; o.frequency.value = f; gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(.0005, t + len);
+  o.connect(gn).connect(master); o.start(t); o.stop(t + len + .02);
+}
 const HORN = {
-  beep() { beep(392, 0, .2, .1, 'square'); beep(494, 0, .2, .07, 'square'); beep(392, .24, .28, .1, 'square'); beep(494, .24, .28, .07, 'square'); },
-  moose() { beep(170, 0, .75, .16, 'sawtooth', .55); beep(255, 0, .75, .06, 'triangle', .55); },
-  duck() { beep(620, 0, .13, .1, 'square', .6); beep(620, .19, .13, .1, 'square', .6); beep(620, .38, .18, .1, 'square', .55); },
-  cow() { beep(210, 0, .3, .12, 'sawtooth', 1.25); beep(260, .28, .65, .12, 'sawtooth', .62); },
-  train() { [294, 370, 440].forEach(f => { beep(f, 0, .32, .07, 'sawtooth'); beep(f, .4, .75, .07, 'sawtooth'); }); },
-  bjallror() { for (let i = 0; i < 8; i++) { beep(1568, i * .09, .1, .05, 'sine'); beep(2093, i * .09 + .03, .08, .04, 'sine'); } },
-  varg() { beep(280, 0, .5, .1, 'sine', 1.9); beep(532, .5, 1, .1, 'sine', .62); },
-  hoho() { [0, .36, .72].forEach(t => { beep(150, t, .26, .17, 'triangle', .8); beep(300, t, .26, .06, 'sine', .8); }); },
-  fanfare() { [523, 659, 784].forEach((f, i) => beep(f, i * .12, .13, .12, 'square')); beep(1047, .36, .45, .12, 'square'); },
+  beep() { // a car horn: two buzzy notes a third apart, tuut tuut
+    for (const at of [0, .3]) for (const f of [349, 440]) voice({ at, len: .24, pitch: f, formants: [[f * 2, 1.2, 2.4], [2200, 2, 1]], vol: .19, attack: .01 });
+  },
+  moose() { // a bull moose's deep, rising and falling grunt
+    voice({ len: .95, pitch: [[0, 105], [.3, 150], [.7, 132], [1, 82]], formants: [[[[0, 320], [.4, 520], [1, 360]], 5, 6], [[[0, 750], [.4, 1000], [1, 700]], 6, 3], [2400, 8, .7]], vol: .2, vib: 3, vibRate: 7, attack: .06, breath: .03 });
+  },
+  duck() { // three nasal quacks, each falling in pitch
+    for (const at of [0, .2, .42]) voice({ at, len: .17, pitch: [[0, 520], [.5, 470], [1, 360]], formants: [[1050, 3, 5], [1700, 4, 3], [2800, 5, 1.2]], vol: .16, attack: .008, breath: .12 });
+  },
+  cow() { // mmm-oooo: lips closed at first, then the mouth opens and the note sinks
+    voice({ len: 1.4, pitch: [[0, 160], [.18, 215], [.7, 205], [1, 150]], formants: [[[[0, 240], [.25, 330], [.75, 640], [1, 470]], 5, 6], [[[0, 800], [.6, 1100], [1, 950]], 6, 2.5], [2600, 8, .6]], vol: .15, vib: 4, vibRate: 5, attack: .08, breath: .02 });
+  },
+  train() { // a steam engine: four chuffs, then a chord on the whistle, choo choo
+    for (let i = 0; i < 4; i++) voice({ at: i * .15, len: .12, formants: [[700, .9, 4]], vol: .07, attack: .005, breath: 1 });
+    for (const [at, len] of [[.66, .36], [1.1, .9]]) for (const f of [440, 554, 659]) voice({ at, len, type: 'triangle', pitch: [[0, f * .96], [.12, f], [1, f * .98]], formants: [[f, 6, 5], [f * 2, 8, 1]], vol: .032, attack: .05, breath: .35 });
+  },
+  bjallror() { // sleigh bells, shaken three times
+    for (let s = 0; s < 3; s++) for (let i = 0; i < 6; i++) {
+      const at = s * .3 + i * .028 + Math.random() * .02, f = 2400 + Math.random() * 900;
+      ting(at, f, .26, .12); ting(at, f * 1.47, .16, .07); ting(at, f * 2.09, .1, .05);
+    }
+  },
+  varg() { // a wolf's howl, sliding up into a long wavering note and down again
+    voice({ len: 1.9, type: 'triangle', pitch: [[0, 330], [.22, 560], [.8, 520], [1, 300]], formants: [[[[0, 500], [.3, 800], [1, 550]], 3, 5], [1300, 5, 1.2]], vol: .075, vib: 7, vibRate: 5.5, attack: .2, breath: .03 });
+  },
+  hoho() { // Tomten's deep ho ho ho
+    for (const at of [0, .34, .68]) voice({ at, len: .27, pitch: [[0, 140], [1, 112]], formants: [[480, 5, 6], [820, 6, 3], [2500, 8, .5]], vol: .22, attack: .02, breath: .06 });
+  },
+  fanfare() { [523, 659, 784].forEach((f, i) => beep(f, i * .12, .13, .2, 'square')); beep(1047, .36, .45, .2, 'square'); },
 };
 const sfx = {
   coin() { const tune = TUNES[S.L.theme.tune] || TUNE, f = NOTE[tune[tuneAt++ % tune.length]]; beep(f, 0, .36, .14); beep(f * 2, 0, .16, .04, 'sine'); },
@@ -1526,9 +1581,18 @@ function drawObstacle(L, o) {
     rect(0, -55, -44, 110, 44, '#8a5c34'); rect(0, -55, -32, 110, 5, '#6d4426'); rect(0, -55, -16, 110, 5, '#6d4426');
     g.fillStyle = '#d9b077'; g.beginPath(); g.ellipse(55, -22, 12, 22, 0, 0, 7); g.fill();
     g.strokeStyle = '#8a5c34'; g.lineWidth = 3; g.beginPath(); g.ellipse(55, -22, 6, 11, 0, 0, 7); g.stroke();
-  } else if (o.kind === 'rock') {
-    blob(0, [[-22, -20, 26], [16, -32, 36], [36, -14, 20]], L.theme.snowy ? '#b9c9da' : '#8f97a8');
-    blob(0, [[12, -46, 14]], L.theme.snowy ? '#fff' : '#b5bcc9');
+  } else if (o.kind === 'rock') { // a warm boulder with a dark outline and a warning stake, so it never melts into the grey road or the roadside stones
+    rect(0, -54, -92, 10, 92, '#2b2d38');
+    for (let i = 0; i < 4; i++) rect(0, -52, -90 + i * 17, 6, 9, i % 2 ? '#fff' : '#e8483f');
+    const lumps = [[-22, -20, 26], [16, -32, 36], [36, -14, 20]];
+    g.strokeStyle = '#2b2d38'; g.lineWidth = 9; g.lineJoin = 'round';
+    g.beginPath(); for (const [x, y, r] of lumps) { g.moveTo(x + r, y); g.arc(x, y, r, 0, 7); } g.stroke();
+    blob(0, lumps, '#b0763f');
+    blob(0, [[-24, -10, 18], [22, -14, 22], [38, -6, 12]], '#8c5a2e');
+    blob(0, [[8, -50, 12], [-28, -32, 8]], L.theme.snowy ? '#fff' : '#d9a066');
+    g.strokeStyle = '#5b3a22'; g.lineWidth = 3.5; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(14, -58); g.lineTo(6, -38); g.lineTo(16, -24); g.moveTo(-30, -14); g.lineTo(-18, -6); g.stroke();
+    if (L.theme.snowy) blob(0, [[8, -64, 16], [-16, -44, 10], [30, -50, 10]], '#fff');
   } else if (o.kind === 'puddle') {
     if (L.theme.snowy) blob(0, [[-46, 2, 26], [-10, -4, 36], [34, 0, 30], [62, 6, 18]], '#fff');
     else {

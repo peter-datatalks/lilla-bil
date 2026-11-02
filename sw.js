@@ -3,7 +3,7 @@
 // or when the network takes longer than 3 seconds.
 
 // Bump the version when releasing so every device downloads the new app files.
-const SHELL = 'lb-shell-v11';
+const SHELL = 'lb-shell-v12';
 
 const APP_FILES = [
   './',

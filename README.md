@@ -24,7 +24,7 @@ Open http://localhost:8791. On localhost, `window.lillaBil` exposes the game for
 Pushing to `main` publishes to GitHub Pages. It must be served over **https** for offline mode
 and "Add to Home Screen" to work.
 
-When you release a new version, bump `SHELL` in `sw.js` (e.g. `lb-shell-v11` → `lb-shell-v12`).
+When you release a new version, bump `SHELL` in `sw.js` (e.g. `lb-shell-v12` → `lb-shell-v13`).
 
 ## Credits
 
